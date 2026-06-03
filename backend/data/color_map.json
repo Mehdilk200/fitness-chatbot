@@ -1,0 +1,82 @@
+[
+  {
+    "muscle name": "Pectoralis Major (Chest)",
+    "color name": "Orange / Light Brown",
+    "hex": "#D97E4A"
+  },
+  {
+    "muscle name": "Deltoids (Shoulders)",
+    "color name": "Orange / Light Brown",
+    "hex": "#D97E4A"
+  },
+  {
+    "muscle name": "Latissimus Dorsi (Lats)",
+    "color name": "Orange / Light Brown",
+    "hex": "#D97E4A"
+  },
+  {
+    "muscle name": "Biceps Brachii",
+    "color name": "Cream / Off-White",
+    "hex": "#EFECCA"
+  },
+  {
+    "muscle name": "Triceps Brachii",
+    "color name": "Cream / Off-White",
+    "hex": "#EFECCA"
+  },
+  {
+    "muscle name": "Rectus Abdominis (Abs)",
+    "color name": "Dark Red / Crimson",
+    "hex": "#A3385D"
+  },
+  {
+    "muscle name": "Serratus Anterior & External Obliques",
+    "color name": "Dark Red / Crimson",
+    "hex": "#A3385D"
+  },
+  {
+    "muscle name": "Erector Spinae (Lower Back)",
+    "color name": "Dark Red / Crimson",
+    "hex": "#A3385D"
+  },
+  {
+    "muscle name": "Trapezius (Upper Back / Neck)",
+    "color name": "Orange / Dark Red",
+    "hex": "#D97E4A"
+  },
+  {
+    "muscle name": "Forearms (Brachioradialis / Extensors)",
+    "color name": "Orange / Red",
+    "hex": "#D97E4A"
+  },
+  {
+    "muscle name": "Rectus Femoris (Quadriceps)",
+    "color name": "Purple",
+    "hex": "#6C5B93"
+  },
+  {
+    "muscle name": "Vastus Lateralis (Quadriceps)",
+    "color name": "Blue",
+    "hex": "#4A7BB0"
+  },
+  {
+    "muscle name": "Vastus Medialis (Quadriceps)",
+    "color name": "Bright Green / Lime",
+    "hex": "#7FB847"
+  },
+  {
+    "muscle name": "Hamstrings (Biceps Femoris)",
+    "color name": "Blue / Purple",
+    "hex": "#4A7BB0"
+  },
+  {
+    "muscle name": "Gluteus Maximus & Medius (Glutes)",
+    "color name": "Purple / Blue",
+    "hex": "#6C5B93"
+  },
+  {
+    "muscle name": "Gastrocnemius & Soleus (Calves)",
+    "color name": "Bright Green / Lime",
+    "hex": "#7FB847"
+  }
+]

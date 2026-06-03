@@ -1,0 +1,14 @@
+
+MONGO_URL=mongodb://localhost:27017
+DB_NAME=fitness_chatbot
+
+JWT_SECRET=hfgtrydhgf..........................bc
+JWT_ALGORITHM=HS256
+JWT_EXPIRE_MINUTES=10080        
+
+GEMINI_API_KEY=AIza..........................ILLIY
+LLM_PROVIDER=gemini
+apiKey=AIza.......................ooFg
+APP_HOST=0.0.0.0
+APP_PORT=2332
+DEBUG=True

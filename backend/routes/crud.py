@@ -215,6 +215,8 @@ async def search_exercises(
         query["$or"] = [
             {"targetMuscles":    {"$regex": muscle, "$options": "i"}},
             {"secondaryMuscles": {"$regex": muscle, "$options": "i"}},
+            {"bodyParts":        {"$regex": muscle, "$options": "i"}},
+            {"name":             {"$regex": muscle, "$options": "i"}},
         ]
     if body_part:
         query["bodyParts"] = {"$regex": body_part, "$options": "i"}

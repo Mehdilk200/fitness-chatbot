@@ -1,6 +1,13 @@
 
+import os
+import sys
 
-from intent_router import classify_intent, route_to_service, Intent
+# Add project root to path so imports work when running from test/ directory
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+from services.intent_router import classify_intent, route_to_service, Intent
 
 
 TEST_MESSAGES = [

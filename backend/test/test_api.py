@@ -7,6 +7,9 @@ import routes.auth as auth_module
 import routes.exercises as exercises_module
 import routes.profile as profile_module
 import routes.schedule as schedule_module
+import routes.chat as chat_module
+import services.rag_services as rag_module
+import services.llm_service as llm_module
 
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -193,6 +196,156 @@ def test_exercises_search_endpoint(client, monkeypatch):
     assert response.status_code == 200
     assert isinstance(response.json(), list)
     assert response.json()[0]["name"] == "Push Up"
+
+
+def test_chat_rag_musculation_intent_returns_exercises(client, monkeypatch):
+    """
+    Test that a musculation-related message triggers the RAG service
+    and returns exercise results in the response.
+    """
+    async def fake_get_current_user():
+        return {"_id": "user123", "email": "test@example.com"}
+
+    async def fake_create_session(user_id):
+        return "session_rag_test_123"
+
+    async def fake_add_message(session_id, message):
+        return True
+
+    async def fake_get_profile(user_id):
+        return {
+            "user_id": user_id,
+            "age": 25,
+            "weight_kg": 70.0,
+            "height_cm": 175.0,
+            "gender": "homme",
+            "goal": "musculation",
+            "level": "débutant",
+            "equipment": "salle",
+            "days_per_week": 4,
+            "language": "fr",
+            "updated_at": "2026-01-01T00:00:00"
+        }
+
+    async def fake_get_session_history(session_id):
+        return []
+
+    async def fake_update_session_title(session_id, title):
+        return True
+
+    # Mock RAG service — return mock exercise data
+    async def fake_retrieve_exercises(muscle_group=None, equipment=None, limit=3):
+        return [
+            {
+                "exerciseId": "bicep_curl_001",
+                "name": "Dumbbell Bicep Curl",
+                "gifUrl": "/data/gifts/dumbbell-bicep-curl.gif",
+                "targetMuscles": ["biceps", "forearms"],
+                "secondaryMuscles": [],
+                "bodyParts": ["arms"],
+                "equipments": ["dumbbell"],
+                "instructions": ["Stand with a dumbbell in each hand.", "Curl the weights up towards your shoulders."]
+            },
+            {
+                "exerciseId": "hammer_curl_002",
+                "name": "Hammer Curl",
+                "gifUrl": "/data/gifts/hammer-curl.gif",
+                "targetMuscles": ["biceps", "brachialis"],
+                "secondaryMuscles": [],
+                "bodyParts": ["arms"],
+                "equipments": ["dumbbell"],
+                "instructions": ["Hold dumbbells with palms facing each other.", "Curl the weights while keeping palms facing in."]
+            }
+        ]
+
+    # Set up all mocks — patch chat_module since it imported these functions locally
+    monkeypatch.setitem(main.app.dependency_overrides, auth_module.get_current_user, fake_get_current_user)
+    monkeypatch.setattr(chat_module, "create_session", fake_create_session)
+    monkeypatch.setattr(chat_module, "get_profile", fake_get_profile)
+    monkeypatch.setattr(chat_module, "add_message", fake_add_message)
+    monkeypatch.setattr(chat_module, "get_session_history", fake_get_session_history)
+    monkeypatch.setattr(chat_module, "update_session_title", fake_update_session_title)
+    # Patch on chat_module because chat.py imports these into its own namespace
+    monkeypatch.setattr(chat_module, "retrieve_exercises", fake_retrieve_exercises)
+
+    response = client.post(
+        "/api/chat",
+        json={"message": "exercice pour les biceps"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    # Verify RAG response structure
+    assert "response" in data
+    assert data["intent"] == "musculation"
+    assert data["language"] == "fr"
+    assert data["session_id"] == "session_rag_test_123"
+
+    # DATABASE-FIRST POLICY: Response must be built strictly from DB fields
+    rag_response = data["response"]
+
+    # Verify exercise names from the database mock data are present
+    assert "Dumbbell Bicep Curl" in rag_response
+    assert "Hammer Curl" in rag_response
+
+    # Verify database fields are used (NOT LLM-generated content)
+    assert "Muscles ciblés" in rag_response          # DB field: targetMuscles
+    assert "biceps" in rag_response.lower()          # From mock DB data (lowercase from DB)
+    assert "forearms" in rag_response.lower()        # From mock DB data
+    assert "Équipement" in rag_response               # DB field: equipments
+    assert "Dumbbell" in rag_response                 # From mock DB data
+    assert "Instructions" in rag_response             # DB field: instructions
+    assert "Stand with a dumbbell" in rag_response    # From mock DB instructions
+    assert "Curl the weights" in rag_response         # From mock DB instructions
+
+    # Verify NO LLM-generated content (no generic coaching advice)
+    # The response should NOT contain coaching LLM-style text
+    # (checking absence of common LLM hallucination patterns)
+    for phrase in ["excellents exercices", "Voici 2"]:
+        assert phrase not in rag_response, f"LLM-generated content detected: '{phrase}'"
+
+    # Verify gif_url is populated and converted to the frontend-accessible path
+    assert data["gif_url"] == "/gifs/dumbbell-bicep-curl.gif"
+
+
+def test_chat_greeting_direct_response(client, monkeypatch):
+    """
+    Test that a greeting message returns a direct response without RAG/LLM.
+    """
+    async def fake_get_current_user():
+        return {"_id": "user123", "email": "test@example.com"}
+
+    async def fake_create_session(user_id):
+        return "session_greeting_123"
+
+    async def fake_add_message(session_id, message):
+        return True
+
+    async def fake_get_session_history(session_id):
+        return []
+
+    async def fake_update_session_title(session_id, title):
+        return True
+
+    monkeypatch.setitem(main.app.dependency_overrides, auth_module.get_current_user, fake_get_current_user)
+    monkeypatch.setattr(chat_module, "create_session", fake_create_session)
+    monkeypatch.setattr(chat_module, "add_message", fake_add_message)
+    monkeypatch.setattr(chat_module, "get_session_history", fake_get_session_history)
+    monkeypatch.setattr(chat_module, "update_session_title", fake_update_session_title)
+
+    response = client.post(
+        "/api/chat",
+        json={"message": "bonjour"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    # Greeting should be direct response with FitBot introduction
+    assert "FitBot" in data["response"] or "Bonjour" in data["response"]
+    assert data["intent"] == "greeting"
+    assert data["language"] == "fr"
 
 
 def test_schedule_list_and_create(client, monkeypatch):

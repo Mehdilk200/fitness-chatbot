@@ -7,7 +7,7 @@ from db.schemas import ChatRequest, ChatResponse
 from services.intent_router import classify_intent, route_to_service
 from routes.crud import get_profile, add_message, create_session, get_session_history, get_progress_last_n_days
 from services.llm_service import generate_response, format_history
-from services.rag_services import retrieve_exercises, format_rag_context
+from services.rag_services import retrieve_exercises, format_rag_context, build_exercise_response, _normalize_gif_url
 from services.calculator_service import process_nutrition_intent
 from services.plan_generator import generate_weekly_plan
 from services.progress_service import analyze_progress
@@ -70,23 +70,41 @@ async def chat_endpoint(request: ChatRequest, current_user: dict = Depends(get_c
         muscle = classification.entities.get("muscle_group")
         eq = classification.entities.get("equipment")
         exercises = await retrieve_exercises(muscle_group=muscle, equipment=eq)
-        context = format_rag_context(exercises)
-        
-        prompt = f"""Le joueur demande: {request.message}
-Context exercices: 
-{context}
 
-Réponds en {route_info['language']} en proposant ces exercices. 
-IMPORTANT: Formate ta réponse en Markdown propre et attrayant ! Utilise des titres, du texte en gras, des listes à puces. 
-SURTOUT: Inclus les images GIF exactement comme elles te sont fournies dans le contexte (avec la syntaxe ![Nom](/gifs/...)). Ne modifie pas les URLs des images."""
-        if profile:
-            prompt += f"\nAttention: Niveau {profile.get('level')}."
-            
-        sys_prompt = "Tu es un expert musculation. Utilise le contexte fourni pour donner des exercices. Ta réponse DOIT être en Markdown bien formaté avec les gifs."
-        reply_text = await generate_response(prompt, sys_prompt)
-        
+        # --- DATABASE-FIRST POLICY ---
+        # Priority 1: Internal Exercise Database (authoritative source)
+        # Priority 2: RAG Documents
+        # Priority 3: LLM General Knowledge (last resort, with clear separation)
+
+        if exercises:
+            # Priority 1: Build response STRICTLY from database fields
+            # NO LLM generation — database content is ground truth
+            reply_text = build_exercise_response(exercises, language=route_info["language"])
+            print(f"[SOURCE] EXERCISE_DATABASE — {len(exercises)} exercises used as authoritative response")
+        else:
+            # Priority 2/3: No database results — use LLM as last resort
+            print(f"[SOURCE] NO_DATABASE_RESULTS — falling back to LLM for: '{request.message}'")
+            context = format_rag_context(exercises)
+            prompt = f"""L'utilisateur demande: {request.message}
+
+Aucun exercice correspondant n'a été trouvé dans la base de données interne.
+
+Context: {context}
+
+IMPORTANT - RÈGLES STRICTES:
+1. N'INVENTE RIEN. Tu n'as pas trouvé d'exercices dans la base de données.
+2. Dis à l'utilisateur qu'aucun exercice spécifique n'a été trouvé pour sa demande.
+3. Si l'utilisateur demande explicitement des conseils généraux, tu peux en donner, MAIS:
+   - Ne jamais inventer de noms d'exercices, de descriptions, de bénéfices ou de liens GIF
+   - Marque clairement les conseils généraux comme "Conseil général (hors base de données)"
+4. Propose à l'utilisateur de reformuler sa demande ou de consulter d'autres groupes musculaires.
+
+Réponds en {route_info['language']}."""
+            sys_prompt = "Tu es FitBot, un coach fitness. Quand la base de données d'exercices ne contient pas de résultats, tu DOIS l'admettre et NE PAS inventer d'exercices, de descriptions, ou de liens. Sois honnête et utile."
+            reply_text = await generate_response(prompt, sys_prompt)
+
         if exercises and exercises[0].get("gifUrl"):
-            gif_url = exercises[0]["gifUrl"]
+            gif_url = _normalize_gif_url(exercises[0]["gifUrl"])
             
     elif service_name == "calculator_service":
         calc_data = process_nutrition_intent(profile, classification.entities)

@@ -16,6 +16,7 @@ import {
 import { Line, Doughnut } from 'react-chartjs-2';
 import faceImg from '../assets/face.jpg';
 import backImg from '../assets/back.jpg';
+import logoImg from '../assets/logoelet.png';
 import colorMap from '../../../backend/data/color_map.json';
 import ScheduleView from '../components/ScheduleView';
 
@@ -134,7 +135,10 @@ export default function Dashboard({ theme, toggleTheme }) {
     <div className="app-shell">
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <Link to="/" className="logo">ELITEFI<span>T</span></Link>
+          <Link to="/" className="logo logo-img-wrap">
+            <img src={logoImg} alt="ELITEFIT" className="logo-img" />
+            <span className="logo-text">ELITEFI<span>T</span></span>
+          </Link>
           <button className="sidebar-close" onClick={toggleSidebar}><i className="ph ph-x"></i></button>
         </div>
         <nav className="sidebar-nav">
@@ -175,7 +179,6 @@ export default function Dashboard({ theme, toggleTheme }) {
               <Link to="/profile" className="btn-primary" style={{ borderRadius: '12px', padding: '6px 12px', fontSize: '12px' }}><i className="ph ph-user-circle"></i> Mon profil</Link>
               <button className="btn-primary" style={{ borderRadius: '12px', padding: '6px 12px', fontSize: '12px' }}><i className="ph ph-chat-circle"></i> ChatBot AI</button>
               <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-              <div className="user-avatar" style={{ width: '32px', height: '32px' }}>M</div>
             </div>
           </div>
 

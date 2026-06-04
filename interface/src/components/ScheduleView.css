@@ -1,15 +1,15 @@
 .schedule-layout {
   display: flex;
-  height: 100vh;
-  background: #f8faff;
-  color: #333;
-  overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-body);
 }
 
 .schedule-main {
   flex: 1;
-  padding: 40px;
+  padding: 0 40px 40px 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -38,7 +38,7 @@
 .current-month-label {
   font-size: 24px;
   font-weight: 700;
-  color: #5d5dff;
+  color: var(--text-main);
 }
 
 .month-nav-btns {
@@ -60,13 +60,13 @@
   justify-content: center;
   border-radius: 8px;
   cursor: pointer;
-  color: #ccc;
+  color: var(--text-muted);
   transition: all 0.2s;
 }
 
 .nav-btn.active {
-  background: #5d5dff;
-  color: white;
+  background: var(--text-main);
+  color: var(--bg-card);
 }
 
 .header-controls {
@@ -102,21 +102,21 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  color: #ccc;
+  color: var(--text-muted);
 }
 
 .toggle-btn.active {
-  background: #5d5dff;
-  color: white;
+  background: var(--text-main);
+  color: var(--bg-card);
 }
 
 .schedule-grid-wrapper {
   flex: 1;
-  background: white;
-  border-radius: 30px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.04);
+  background: var(--bg-card);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   overflow: auto;
-  border: 1px solid rgba(0,0,0,0.02);
+  border: 1px solid var(--border);
 }
 
 .schedule-grid {
@@ -132,9 +132,9 @@
   padding-left: 24px;
   font-weight: 800;
   font-size: 14px;
-  color: #1a1a1a;
-  border-bottom: 1px solid #f8f9fb;
-  border-right: 1px solid #f8f9fb;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
 .grid-day-header {
@@ -144,34 +144,34 @@
   justify-content: center;
   font-weight: 600;
   font-size: 13px;
-  color: #bbb;
-  border-bottom: 1px solid #f8f9fb;
-  border-right: 1px solid #f8f9fb;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
 .grid-time-label {
-  height: 180px; /* Taller for 2h slots */
+  height: 180px;
   display: flex;
   align-items: flex-start;
   padding-top: 24px;
   justify-content: center;
   font-size: 14px;
   font-weight: 800;
-  color: #bbb;
-  border-right: 1px solid #f8f9fb;
-  border-bottom: 1px solid #f8f9fb;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .grid-cell {
   height: 180px;
-  border-right: 1px solid #f8f9fb;
-  border-bottom: 1px solid #f8f9fb;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 12px;
   transition: background 0.2s;
 }
 
 .grid-cell:hover {
-  background: #fafcff;
+  background: var(--bg-elevated);
 }
 
 .workout-card-mini {
@@ -202,13 +202,13 @@
 .card-title {
   font-size: 14px;
   font-weight: 800;
-  color: #1a1a1a;
+  color: var(--text-main);
 }
 
 .card-cal {
   font-size: 11px;
   font-weight: 800;
-  color: #ff5c5c;
+  color: var(--text-main);
   display: flex;
   align-items: center;
   gap: 2px;
@@ -217,7 +217,8 @@
 .card-time {
   font-size: 12px;
   font-weight: 700;
-  opacity: 0.5;
+  opacity: 0.7;
+  color: var(--text-main);
 }
 
 .card-img {
@@ -234,23 +235,25 @@
   object-fit: cover;
 }
 
-/* Sidebar Styles - Matching Image 2 */
+/* Sidebar Styles */
 .schedule-sidebar {
-  width: 380px;
-  background: #f8faff;
-  border-left: 1px solid #f0f2f5;
-  padding: 40px;
+  width: 340px;
+  background: var(--bg-sidebar);
+  border-left: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 30px;
   overflow-y: auto;
 }
 
 .mini-calendar {
-  background: white;
-  border-radius: 32px;
+  background: var(--bg-card);
+  border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  border: 1px solid var(--border);
 }
 
 .mini-calendar-header {
@@ -285,7 +288,7 @@
   text-align: center;
   font-size: 13px;
   font-weight: 800;
-  color: #5d5dff;
+  color: var(--text-muted);
   padding-bottom: 16px;
 }
 
@@ -296,15 +299,14 @@
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
-  color: #555;
+  color: var(--text-main);
   border-radius: 12px;
   cursor: pointer;
 }
 
 .mini-day.today {
-  background: #ff5c5c; /* Red circle as per image */
-  color: white;
-  box-shadow: 0 6px 12px rgba(255, 92, 92, 0.3);
+  background: var(--green);
+  color: var(--text-main);
 }
 
 .mini-day.blank {
@@ -313,25 +315,24 @@
 
 .btn-add-new-task {
   width: 100%;
-  background: #ff5c5c;
-  color: white;
+  background: var(--text-main);
+  color: var(--bg-card);
   border: none;
-  padding: 20px;
-  border-radius: 20px;
+  padding: 16px;
+  border-radius: 16px;
   font-weight: 800;
-  font-size: 18px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 15px 30px rgba(255, 92, 92, 0.2);
 }
 
 .btn-add-new-task:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(255, 92, 92, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
 .plus-icon {
@@ -351,18 +352,19 @@
 }
 
 .stat-card {
-  background: white;
-  border-radius: 28px;
-  padding: 28px;
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.02);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
 }
 
 .stat-card.active {
-  background: #5d5dff; /* Blue card as per image */
-  color: white;
+  background: var(--text-main);
+  color: var(--bg-card);
 }
 
 .stat-label {
@@ -409,42 +411,42 @@
 }
 
 .bell-icon {
-  background: white;
-  width: 48px;
-  height: 48px;
+  background: var(--bg-card);
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: #5d5dff;
+  color: var(--text-main);
+  border: 1px solid var(--border);
   font-size: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 
 .reminder-item {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .rem-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
 }
 
-.rem-icon.yellow { background: #fff8e1; color: #ffca28; }
-.rem-icon.blue { background: #e3f2fd; color: #42a5f5; }
+.rem-icon.yellow { background: var(--green); color: var(--text-main); }
+.rem-icon.blue { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); }
 
 .rem-content { flex: 1; }
-.rem-text { display: block; font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 4px; }
-.rem-action { font-size: 13px; font-weight: 800; color: #5d5dff; text-decoration: underline; cursor: pointer; }
-.rem-time { font-size: 13px; font-weight: 800; color: #ccc; }
+.rem-text { display: block; font-size: 13px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+.rem-action { font-size: 12px; font-weight: 800; color: var(--text-muted); text-decoration: underline; cursor: pointer; }
+.rem-time { font-size: 12px; font-weight: 800; color: var(--text-muted); }
 
 /* Modal - Alert Card Style */
 .modal-overlay {

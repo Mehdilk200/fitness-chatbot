@@ -84,6 +84,19 @@ export const chatApi = {
       body: data,
     });
     return handleResponse(res);
+  },
+  getHistory: async () => {
+    const res = await fetch(`${BASE_URL}/chat/history`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+  deleteSession: async (sessionId) => {
+    const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
   }
 };
 

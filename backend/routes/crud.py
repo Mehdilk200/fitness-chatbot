@@ -60,17 +60,26 @@ async def get_profile(user_id: str) -> Optional[dict]:
 
 
 
-async def create_session(user_id: str) -> str:
+async def create_session(user_id: str, title: str = "Nouvelle discussion") -> str:
    
     db  = get_db()
     doc = {
         "user_id":    user_id,
+        "title":      title,
         "messages":   [],
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     }
     result = await db.chat_sessions.insert_one(doc)
     return str(result.inserted_id)
+
+async def update_session_title(session_id: str, title: str) -> bool:
+    db = get_db()
+    result = await db.chat_sessions.update_one(
+        {"_id": ObjectId(session_id)},
+        {"$set": {"title": title}}
+    )
+    return result.modified_count > 0
 
 
 async def add_message(session_id: str, message: dict) -> bool:
@@ -94,6 +103,11 @@ async def get_session(session_id: str) -> Optional[dict]:
         doc["_id"] = str(doc["_id"])
     return doc
 
+async def delete_chat_session(session_id: str, user_id: str) -> bool:
+    db = get_db()
+    result = await db.chat_sessions.delete_one({"_id": ObjectId(session_id), "user_id": user_id})
+    return result.deleted_count > 0
+
 
 async def get_session_history(session_id: str, last_n: int = 10) -> List[dict]:
    
@@ -107,8 +121,7 @@ async def get_session_history(session_id: str, last_n: int = 10) -> List[dict]:
 async def get_user_sessions(user_id: str, limit: int = 20) -> List[dict]:
     db       = get_db()
     cursor   = db.chat_sessions.find(
-        {"user_id": user_id},
-        {"messages": {"$slice": -1}}          
+        {"user_id": user_id}
     ).sort("updated_at", -1).limit(limit)
     sessions = await cursor.to_list(limit)
     for s in sessions:

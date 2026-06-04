@@ -11,6 +11,8 @@ from services.rag_services import retrieve_exercises, format_rag_context
 from services.calculator_service import process_nutrition_intent
 from services.plan_generator import generate_weekly_plan
 from services.progress_service import analyze_progress
+from routes.crud import get_user_sessions, delete_chat_session, update_session_title
+from bson import ObjectId
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -70,12 +72,18 @@ async def chat_endpoint(request: ChatRequest, current_user: dict = Depends(get_c
         exercises = await retrieve_exercises(muscle_group=muscle, equipment=eq)
         context = format_rag_context(exercises)
         
-        prompt = f"Le joueur demande: {request.message}\nContext exercices: {context}\nRéponds en {route_info['language']} en proposant ces exercices avec des instructions claires."
+        prompt = f"""Le joueur demande: {request.message}
+Context exercices: 
+{context}
+
+Réponds en {route_info['language']} en proposant ces exercices. 
+IMPORTANT: Formate ta réponse en Markdown propre et attrayant ! Utilise des titres, du texte en gras, des listes à puces. 
+SURTOUT: Inclus les images GIF exactement comme elles te sont fournies dans le contexte (avec la syntaxe ![Nom](/gifs/...)). Ne modifie pas les URLs des images."""
         if profile:
             prompt += f"\nAttention: Niveau {profile.get('level')}."
             
-        reply_text = await generate_response(prompt, "Tu es un expert musculation. Utilise le contexte fourni pour donner des exercices.")
-        
+        sys_prompt = "Tu es un expert musculation. Utilise le contexte fourni pour donner des exercices. Ta réponse DOIT être en Markdown bien formaté avec les gifs."
+        reply_text = await generate_response(prompt, sys_prompt)
         
         if exercises and exercises[0].get("gifUrl"):
             gif_url = exercises[0]["gifUrl"]
@@ -102,6 +110,14 @@ async def chat_endpoint(request: ChatRequest, current_user: dict = Depends(get_c
         
     else:
         reply_text = "Je n'ai pas pu traiter votre demande."
+
+    # 5. Generate and save title if it's the first interaction in this session
+    if not history:
+        title_prompt = f"Génère un titre très court (2 à 4 mots maximum) pour résumer cette demande: '{request.message}'. Réponds UNIQUEMENT avec le titre, sans guillemets."
+        sys_prompt = "Tu es un assistant qui génère des titres de conversation ultra-courts."
+        generated_title = await generate_response(title_prompt, sys_prompt)
+        cleaned_title = generated_title.replace('"', '').replace("'", "").strip()
+        await update_session_title(session_id, cleaned_title)
 
     
     asst_msg_doc = {
@@ -143,3 +159,17 @@ async def add_assistant_message(session_id: str, content: str, service: str):
         "service": service
     }
     await add_message(session_id, doc)
+
+@router.get("/history")
+async def get_chat_history(current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    sessions = await get_user_sessions(user_id)
+    return {"sessions": sessions}
+
+@router.delete("/session/{session_id}")
+async def delete_session_endpoint(session_id: str, current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    deleted = await delete_chat_session(session_id, user_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"status": "success"}

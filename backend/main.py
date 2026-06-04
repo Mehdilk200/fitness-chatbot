@@ -59,7 +59,7 @@ app.include_router(schedule_router)
 
 
 
-GIFS_DIR = os.path.join(os.path.dirname(__file__), "gifs")
+GIFS_DIR = os.path.join(os.path.dirname(__file__), "data", "gifts")
 if os.path.exists(GIFS_DIR):
     app.mount("/gifs", StaticFiles(directory=GIFS_DIR), name="gifs")
 

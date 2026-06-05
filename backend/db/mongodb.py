@@ -1,5 +1,5 @@
 
-
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import IndexModel, ASCENDING, DESCENDING
 import os
@@ -13,7 +13,7 @@ db     = None
 
 async def connect_db():
     global client, db
-    client = AsyncIOMotorClient(MONGO_URL)
+    client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
     db     = client[DB_NAME]
     await create_indexes()
     print(f" MongoDB connecté : {DB_NAME}")

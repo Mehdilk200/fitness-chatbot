@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.venv
+venv
+env
+
+# Environment files
+.env
+.env.*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test files
+test/
+pytest.ini
+
+# Finetuning data
+finetuning/
+
+# ChromaDB data (ephemeral in container)
+chroma_data/
+
+# Uploads (ephemeral in container)
+uploads/
+
+# Frontend
+interface/
+src/
+
+# Documentation
+*.md
+LICENSE
+
+# Docker (avoid recursive copy)
+Dockerfile
+.dockerignore

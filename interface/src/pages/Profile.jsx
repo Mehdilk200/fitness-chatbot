@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { profileApi, authApi } from '../services/api';
 import ThemeToggle from '../components/ThemeToggle';
+import logoImg from '../assets/logoelet.png';
 
 export default function Profile({ theme, toggleTheme }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -93,16 +94,21 @@ export default function Profile({ theme, toggleTheme }) {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
         <div className="sidebar-header">
-          <Link to="/" className="logo">ELITEFI<span>T</span></Link>
-          <button className="sidebar-close" onClick={toggleSidebar}><i className="ph ph-x"></i></button>
+          <Link to="/" className="logo logo-img-wrap">
+            <img src={logoImg} alt="ELITEFIT" className="logo-img" />
+            <span className="logo-text">ELITEFI<span>T</span></span>
+          </Link>
+          <button className="sidebar-close" onClick={toggleSidebar} aria-label={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}>
+            <i className={`ph ${sidebarOpen ? 'ph-caret-left' : 'ph-list'}`}></i>
+          </button>
         </div>
 
         <nav className="sidebar-nav">
-          <Link to="/chat" className="nav-item"><span className="ni"><i className="ph ph-chat-circle-text"></i></span>Chat</Link>
-          <Link to="/dashboard" className="nav-item"><span className="ni"><i className="ph ph-chart-bar"></i></span>Dashboard</Link>
-          <Link to="/profile" className="nav-item active"><span className="ni"><i className="ph ph-user"></i></span>Profil</Link>
+          <Link to="/chat" className="nav-item"><span className="ni"><i className="ph ph-chat-circle-text"></i></span><span className="nav-text">Chat</span></Link>
+          <Link to="/dashboard" className="nav-item"><span className="ni"><i className="ph ph-chart-bar"></i></span><span className="nav-text">Dashboard</span></Link>
+          <Link to="/profile" className="nav-item active"><span className="ni"><i className="ph ph-user"></i></span><span className="nav-text">Profil</span></Link>
         </nav>
 
         <div className="sidebar-footer">
@@ -114,7 +120,8 @@ export default function Profile({ theme, toggleTheme }) {
             </div>
           </div>
           <button className="btn-logout" onClick={() => { localStorage.clear(); navigate('/auth'); }}>
-            Déconnexion
+            <i className="ph ph-sign-out"></i>
+            <span className="logout-text">Déconnexion</span>
           </button>
         </div>
       </aside>

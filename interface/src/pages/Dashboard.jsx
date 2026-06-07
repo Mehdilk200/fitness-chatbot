@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authApi } from '../services/api';
 import ThemeToggle from '../components/ThemeToggle';
 import { 
   Chart as ChartJS, 
@@ -45,10 +46,22 @@ const muscleToApiMap = {
 export default function Dashboard({ theme, toggleTheme }) {
   const [activeTab, setActiveTab] = useState('Nutrition');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user] = useState({ email: 'elgrand.medl.020@gmail.com' });
+  const [userEmail, setUserEmail] = useState('');
   const navigate = useNavigate();
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const data = await authApi.getMe();
+        setUserEmail(data.email);
+      } catch {
+        navigate('/auth');
+      }
+    };
+    fetchUser();
+  }, [navigate]);
 
   // Nutrition Graphe Data
   const activityData = {
@@ -133,28 +146,33 @@ export default function Dashboard({ theme, toggleTheme }) {
   return (
 
     <div className="app-shell">
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
         <div className="sidebar-header">
           <Link to="/" className="logo logo-img-wrap">
             <img src={logoImg} alt="ELITEFIT" className="logo-img" />
             <span className="logo-text">ELITEFI<span>T</span></span>
           </Link>
-          <button className="sidebar-close" onClick={toggleSidebar}><i className="ph ph-x"></i></button>
+          <button className="sidebar-close" onClick={toggleSidebar} aria-label={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}>
+            <i className={`ph ${sidebarOpen ? 'ph-caret-left' : 'ph-list'}`}></i>
+          </button>
         </div>
         <nav className="sidebar-nav">
-          <Link to="/chat" className="nav-item"><span className="ni"><i className="ph ph-chat-circle-text"></i></span>Chat</Link>
-          <Link to="/dashboard" className="nav-item active"><span className="ni"><i className="ph ph-chart-bar"></i></span>Dashboard</Link>
-          <Link to="/profile" className="nav-item"><span className="ni"><i className="ph ph-user"></i></span>Profil</Link>
+          <Link to="/chat" className="nav-item"><span className="ni"><i className="ph ph-chat-circle-text"></i></span><span className="nav-text">Chat</span></Link>
+          <Link to="/dashboard" className="nav-item active"><span className="ni"><i className="ph ph-chart-bar"></i></span><span className="nav-text">Dashboard</span></Link>
+          <Link to="/profile" className="nav-item"><span className="ni"><i className="ph ph-user"></i></span><span className="nav-text">Profil</span></Link>
         </nav>
         <div className="sidebar-footer">
           <div className="user-info">
-            <div className="user-avatar">E</div>
+            <div className="user-avatar">{userEmail?.charAt(0).toUpperCase() || '?'}</div>
             <div className="user-details">
-              <span>{user.email}</span>
+              <span>{userEmail || 'Chargement...'}</span>
               <span className="user-plan">Plan Gratuit</span>
             </div>
           </div>
-          <button className="btn-logout" onClick={() => { localStorage.clear(); navigate('/auth'); }}>Déconnexion</button>
+          <button className="btn-logout" onClick={() => { localStorage.clear(); navigate('/auth'); }}>
+            <i className="ph ph-sign-out"></i>
+            <span className="logout-text">Déconnexion</span>
+          </button>
         </div>
       </aside>
 

@@ -130,7 +130,7 @@ export default function Auth({ theme, toggleTheme }) {
               <h3 className="form-title">Crée ton compte <i className="ph ph-rocket-launch"></i></h3>
               <div className="field">
                 <label>Email</label>
-                <input type="email" name="reg-email" id="reg-email" placeholder="toi@email.com" required/>
+                <input type="email" name="reg-email" id="reg-email" placeholder="yourname@gmail.com" required/>
               </div>
               <div className="field">
                 <label>Mot de passe</label>

@@ -3,8 +3,8 @@ import os
 import uuid
 import shutil
 from routes.auth import get_current_user
-from db.schemas import ChatRequest, ChatResponse
-from services.intent_router import classify_intent, route_to_service
+from db.schemas import ChatRequest, ChatResponse, SupportRequest, SupportResponse
+from services.intent_router import classify_intent, route_to_service, detect_language
 from routes.crud import get_profile, add_message, create_session, get_session_history, get_progress_last_n_days
 from services.llm_service import generate_response, format_history
 from services.rag_services import retrieve_exercises, format_rag_context, build_exercise_response, _normalize_gif_url
@@ -71,11 +71,7 @@ async def chat_endpoint(request: ChatRequest, current_user: dict = Depends(get_c
         eq = classification.entities.get("equipment")
         exercises = await retrieve_exercises(muscle_group=muscle, equipment=eq)
 
-        # --- DATABASE-FIRST POLICY ---
-        # Priority 1: Internal Exercise Database (authoritative source)
-        # Priority 2: RAG Documents
-        # Priority 3: LLM General Knowledge (last resort, with clear separation)
-
+       
         if exercises:
             # Priority 1: Build response STRICTLY from database fields
             # NO LLM generation — database content is ground truth
@@ -152,6 +148,39 @@ Réponds en {route_info['language']}."""
         language=route_info["language"],
         gif_url=gif_url
     )
+@router.post("/support", response_model=SupportResponse)
+async def support_chat_endpoint(request: SupportRequest):
+    """
+    Public guest/support endpoint. No auth required.
+    Uses a lightweight LLM call with a sales/support system prompt.
+    Does NOT access user profiles, exercise RAG, or any biometric data.
+    """
+    language = detect_language(request.message)
+    
+    system_instruction = """Tu es un assistant commercial et support pour EliteFiT, un service de coaching fitness premium.
+
+Ton rôle est de:
+1. Répondre aux questions sur les services EliteFiT (tarifs, programmes, localisation, horaires)
+2. Aider les visiteurs à comprendre comment commencer leur transformation
+3. Encourager poliment la création de compte et l'inscription pour des conseils personnalisés
+4. Fournir un support de base et répondre aux questions générales
+
+RÈGLES STRICTES:
+- Sois amical, enthousiaste et professionnel — sois un ambassadeur de la marque
+- Ne donne PAS de conseils fitness personnalisés (tu n'as pas le profil de l'utilisateur)
+- Si l'utilisateur demande des exercices, des programmes ou des conseils nutrition personnalisés, invite-le à créer un compte gratuitement
+- Redirige vers /auth?mode=register pour l'inscription
+- Réponds dans la langue de l'utilisateur (français, anglais, arabe ou darija)
+- Reste concis (3-4 phrases max) et termine toujours par une note positive ou un call-to-action
+- N'utilise PAS la base de données d'exercices ni le contexte RAG"""
+    
+    prompt = f"Message de l'utilisateur: {request.message}\n\nRéponds de manière utile et engageante en {language}."
+    
+    reply = await generate_response(prompt, system_instruction)
+    
+    return SupportResponse(response=reply)
+
+
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     

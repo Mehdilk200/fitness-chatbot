@@ -10,10 +10,15 @@ DB_NAME   = os.getenv("DB_NAME",   "fitness_chatbot")
 client = None
 db     = None
 
+print("MONGO_URL =", os.getenv("MONGO_URL"))
 
 async def connect_db():
     global client, db
-    client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
+    # Use TLS only for Atlas connections (mongodb+srv://)
+    if "mongodb+srv://" in MONGO_URL or "ssl=true" in MONGO_URL.lower() or "tls=true" in MONGO_URL.lower():
+        client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
+    else:
+        client = AsyncIOMotorClient(MONGO_URL)
     db     = client[DB_NAME]
     await create_indexes()
     print(f" MongoDB connecté : {DB_NAME}")

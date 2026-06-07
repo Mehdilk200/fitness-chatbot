@@ -116,6 +116,17 @@ export const exerciseApi = {
   }
 };
 
+export const supportApi = {
+  sendMessage: async (message) => {
+    const res = await fetch(`${BASE_URL}/chat/support`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    return handleResponse(res);
+  },
+};
+
 export const scheduleApi = {
   getSchedule: async () => {
     const res = await fetch(`${BASE_URL}/schedule`, {

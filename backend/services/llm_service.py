@@ -3,7 +3,7 @@ from google import genai
 from google.genai import types  
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-_model_name = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
+_model_name = os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
 
 client = None
 if API_KEY:

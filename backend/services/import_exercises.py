@@ -7,7 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME   = os.getenv("DB_NAME",   "fitness_chatbot")
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 GIFS_DIR = os.path.join(DATA_DIR, "gifts")
 
 def load_json(filename):

@@ -1,5 +1,10 @@
 import asyncio
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from db.mongodb import get_db, connect_db, disconnect_db
 from db.chroma import get_chroma_collection
 

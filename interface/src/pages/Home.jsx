@@ -20,7 +20,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Radar } from 'react-chartjs-2';
-import { chatApi } from '../services/api';
+import { chatApi, supportApi } from '../services/api';
 
 ChartJS.register(
   RadialLinearScale,
@@ -77,27 +77,70 @@ export default function Home({ theme, toggleTheme }) {
   };
 
 
-  const [messages, setMessages] = useState([
-    { role: 'bot', content: "Welcome to EliteFiT! I'm your AI fitness coach. Ask me anything about training, nutrition, or how to start your transformation journey." }
-  ]);
+  // Initial welcome message depends on auth status
+  const getInitialMessage = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      return { role: 'bot', content: "Welcome back! I'm your AI fitness coach. Ask me anything about training, nutrition, or your progress." };
+    }
+    return { role: 'bot', content: "Welcome to EliteFiT!  I'm here to help you learn about our services, pricing, and how to start your transformation. Create a free account to get personalized fitness coaching!" };
+  };
+
+  const [messages, setMessages] = useState([getInitialMessage()]);
   const [inputText, setInputText] = useState('');
 
-  const sendMsg = async () => {
-    if (!inputText.trim()) return;
+  const sendMsg = async (text) => {
+    const messageText = text || inputText;
+    if (!messageText.trim()) return;
 
-    const userMsg = { role: 'user', content: inputText };
+    const userMsg = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMsg]);
-    const currentInput = inputText;
-    setInputText('');
+    if (!text) setInputText('');
 
     try {
-      const data = await chatApi.sendMessage(currentInput);
+      // Route to support endpoint for guests, member endpoint for logged-in users
+      const token = localStorage.getItem('token');
+      const data = token
+        ? await chatApi.sendMessage(messageText)
+        : await supportApi.sendMessage(messageText);
       const botMsg = { role: 'bot', content: data.response };
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
       console.error("Chat error:", err);
       setMessages(prev => [...prev, { role: 'bot', content: "Error connecting to AI Coach." }]);
     }
+  };
+
+  // ── Missing function definitions ──
+  const submitForm = () => {
+    const formSuccess = document.getElementById('form-success');
+    if (formSuccess) formSuccess.style.display = 'block';
+  };
+
+  const adjustTimer = (delta) => {
+    console.log('Timer adjusted by', delta);
+  };
+
+  const toggleTimer = () => {
+    console.log('Timer toggled');
+  };
+
+  const openModal = (type) => {
+    const modal = document.getElementById('connectModal');
+    if (modal) modal.classList.add('open');
+  };
+
+  const closeModal = () => {
+    const modal = document.getElementById('connectModal');
+    if (modal) modal.classList.remove('open');
+  };
+
+  const startScan = () => {
+    console.log('Device scan started');
+  };
+
+  const sendQuick = (text) => {
+    sendMsg(text);
   };
 
   // FAQ State
@@ -209,10 +252,10 @@ export default function Home({ theme, toggleTheme }) {
         </div>
         <div className="about-imgs">
           <div className="about-img-main">
-            <div className="img-placeholder"><img src="https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="" srcset="" /></div>
+            <div className="img-placeholder"><img src="https://images.unsplash.com/photo-1599058917212-d750089bc07e?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="" srcSet="" /></div>
           </div>
           <div className="about-img-sm">
-            <div className="img-placeholder"><img src="https://images.unsplash.com/photo-1519311965067-36d3e5f33d39?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="" srcset="" /></div>
+            <div className="img-placeholder"><img src="https://images.unsplash.com/photo-1519311965067-36d3e5f33d39?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="" srcSet="" /></div>
           </div>
         </div>
       </section>
@@ -379,10 +422,10 @@ export default function Home({ theme, toggleTheme }) {
         </div>
         <div className="testimonial-imgs">
           <div className="t-img-main">
-            <div className="img-placeholder"><img src="https://plus.unsplash.com/premium_photo-1713800444752-4e155bf14bff?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" srcset="" style={{width:'100%'}} /></div>
+            <div className="img-placeholder"><img src="https://plus.unsplash.com/premium_photo-1713800444752-4e155bf14bff?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" srcSet="" style={{width:'100%'}} /></div>
           </div>
           <div className="t-img-sm">
-            <div className="img-placeholder"><img src="https://images.unsplash.com/photo-1761839258420-5c3e2f2e2a74?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" srcset="" style={{width:'100%'}}/>  </div>
+            <div className="img-placeholder"><img src="https://images.unsplash.com/photo-1761839258420-5c3e2f2e2a74?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" srcSet="" style={{width:'100%'}}/>  </div>
           </div>
         </div>
       </section>
@@ -574,7 +617,7 @@ export default function Home({ theme, toggleTheme }) {
               <label>Message</label>
               <textarea placeholder="Comments" id="cf-msg"></textarea>
             </div>
-            <button className="form-submit" onClick="submitForm()">Send Message</button>
+            <button className="form-submit" onClick={submitForm}>Send Message</button>
             <div className="form-success" id="form-success">Message Sent! We will contact you soon.</div>
           </div>
         </div>
@@ -821,9 +864,9 @@ export default function Home({ theme, toggleTheme }) {
             <div className="hd-timer-desc">5 to 45 minutes, with or without equipment. And you can even filter by trainer, music, or meditation theme.</div>
             {/*  Timer controls  */}
             <div style={{ display: "flex", gap: "12px", marginTop: "20px", alignItems: "center", justifyContent: "center" }}>
-              <button onClick="adjustTimer(-5)" style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#2a2a2a", border: "none", color: "var(--white)", fontSize: "18px", cursor: "pointer" }}>−</button>
-              <button id="timerPlayBtn" onClick="toggleTimer()" style={{ background: "var(--lime)", color: "var(--black)", border: "none", padding: "10px 24px", borderRadius: "20px", fontFamily: "'Barlow Condensed',sans-serif", fontSize: "15px", fontWeight: "700", letterSpacing: "1px", cursor: "pointer" }}><i className="ph ph-play-fill"></i> START</button>
-              <button onClick="adjustTimer(5)" style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#2a2a2a", border: "none", color: "var(--white)", fontSize: "18px", cursor: "pointer" }}>+</button>
+              <button onClick={() => adjustTimer(-5)} style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#2a2a2a", border: "none", color: "var(--white)", fontSize: "18px", cursor: "pointer" }}>−</button>
+              <button id="timerPlayBtn" onClick={toggleTimer} style={{ background: "var(--lime)", color: "var(--black)", border: "none", padding: "10px 24px", borderRadius: "20px", fontFamily: "'Barlow Condensed',sans-serif", fontSize: "15px", fontWeight: "700", letterSpacing: "1px", cursor: "pointer" }}><i className="ph ph-play-fill"></i> START</button>
+              <button onClick={() => adjustTimer(5)} style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#2a2a2a", border: "none", color: "var(--white)", fontSize: "18px", cursor: "pointer" }}>+</button>
             </div>
           </div>
         </div>
@@ -881,7 +924,7 @@ export default function Home({ theme, toggleTheme }) {
 
           {/*  Connect devices  */}
           <div className="hd-connect">
-            <div className="hd-connect-device" id="watchBtn" onClick="openModal('watch')">
+            <div className="hd-connect-device" id="watchBtn" onClick={() => openModal('watch')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="7" y="2" width="10" height="20" rx="3" />
                 <path d="M7 7h10M7 17h10" />
@@ -893,7 +936,7 @@ export default function Home({ theme, toggleTheme }) {
               </div>
             </div>
             <div className="hd-connect-or">or</div>
-            <div className="hd-connect-device" id="phoneBtn" onClick="openModal('phone')">
+            <div className="hd-connect-device" id="phoneBtn" onClick={() => openModal('phone')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="5" y="2" width="14" height="20" rx="3" />
                 <circle cx="12" cy="17" r="1" />
@@ -904,7 +947,7 @@ export default function Home({ theme, toggleTheme }) {
               </div>
             </div>
             <div className="hd-connect-or">or</div>
-            <div className="hd-connect-device" id="garminBtn" onClick="openModal('garmin')">
+            <div className="hd-connect-device" id="garminBtn" onClick={() => openModal('garmin')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 7v5l3 3" />
@@ -944,8 +987,8 @@ export default function Home({ theme, toggleTheme }) {
               <div className="hd-modal-step"><div className="hd-step-num">2</div><span>Make sure Bluetooth is enabled and your device is nearby</span></div>
               <div className="hd-modal-step"><div className="hd-step-num">3</div><span>Tap "Connect Now" — your live data will sync to your coach dashboard instantly</span></div>
             </div>
-            <button className="hd-modal-btn" onClick="startScan()">Connect Now</button>
-            <button className="hd-modal-close" onClick="closeModal()">Cancel</button>
+            <button className="hd-modal-btn" onClick={startScan}>Connect Now</button>
+            <button className="hd-modal-close" onClick={closeModal}>Cancel</button>
           </div>
           <div className="hd-scanning" id="modalScanning">
             <div className="hd-scan-ring"></div>
@@ -1042,10 +1085,10 @@ export default function Home({ theme, toggleTheme }) {
         </div>
 
         <div className="chat-quick-btns" id="quick-btns">
-          <button className="quick-btn" onClick="sendQuick('How do I start?')">How do I start?</button>
-          <button className="quick-btn" onClick="sendQuick('Best workout for beginners')">Beginner workout</button>
-          <button className="quick-btn" onClick="sendQuick('Nutrition tips for muscle gain')">Nutrition tips</button>
-          <button className="quick-btn" onClick="sendQuick('How long to see results?')">See results</button>
+          <button className="quick-btn" onClick={() => sendQuick('How do I start?')}>How do I start?</button>
+          <button className="quick-btn" onClick={() => sendQuick('Best workout for beginners')}>Beginner workout</button>
+          <button className="quick-btn" onClick={() => sendQuick('Nutrition tips for muscle gain')}>Nutrition tips</button>
+          <button className="quick-btn" onClick={() => sendQuick('How long to see results?')}>See results</button>
         </div>
 
         <div className="chat-input-wrap">

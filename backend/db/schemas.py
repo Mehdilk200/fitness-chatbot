@@ -102,6 +102,14 @@ class ChatResponse(BaseModel):
     language:   str
     gif_url:    Optional[str] = None             
 
+class SupportRequest(BaseModel):
+    """Lightweight request for the public guest/support chat endpoint."""
+    message: str
+
+class SupportResponse(BaseModel):
+    """Lightweight response for the public guest/support chat endpoint."""
+    response: str
+
 
 
 

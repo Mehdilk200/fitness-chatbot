@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
+import asyncio
 from dotenv import load_dotenv
 
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -17,13 +18,29 @@ from routes.chat import router as chat_router
 from routes.exercises import router as exercises_router
 from routes.profile import router as profile_router
 from routes.schedule import router as schedule_router
+from routes.wearable import router as wearable_router
 from routes.debug import router as debug_router
+from services.redis_client import get_redis, close_redis
+from services.webhook_queue import webhook_worker_loop
+from routes.wearable import process_webhook_payload
+
+_webhook_task = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _webhook_task
     await connect_db()
+    await get_redis()
+    _webhook_task = asyncio.create_task(webhook_worker_loop(process_webhook_payload))
     yield
+    if _webhook_task:
+        _webhook_task.cancel()
+        try:
+            await _webhook_task
+        except asyncio.CancelledError:
+            pass
+    await close_redis()
     await disconnect_db()
 
 
@@ -56,6 +73,7 @@ app.include_router(chat_router)
 app.include_router(exercises_router)
 app.include_router(profile_router)
 app.include_router(schedule_router)
+app.include_router(wearable_router)
 
 # Debug endpoints: only load when DEBUG=True (local development)
 if os.getenv("DEBUG", "").lower() == "true":

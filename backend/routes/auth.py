@@ -63,6 +63,8 @@ async def register(request: RegisterRequest):
     user = await create_user(
         email         = request.email,
         password_hash = hash_password(request.password),
+        first_name    = request.first_name,
+        last_name     = request.last_name,
     )
 
     token = create_token(str(user["_id"]))
@@ -93,6 +95,20 @@ async def login(request: LoginRequest):
 @router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
     return {
-        "user_id": current_user["_id"],
-        "email":   current_user["email"],
+        "user_id":   str(current_user.get("_id", "")),
+        "email":     current_user.get("email", ""),
+        "first_name": current_user.get("first_name", ""),
+        "last_name":  current_user.get("last_name", ""),
     }
+
+
+@router.get("/oauth/{provider}")
+async def oauth_login(provider: str):
+    providers = {"google", "apple"}
+    if provider not in providers:
+        raise HTTPException(status_code=400, detail="Unsupported OAuth provider")
+
+    raise HTTPException(
+        status_code=501,
+        detail=f"{provider.title()} OAuth not yet configured. Set up your {provider} credentials in the backend .env file."
+    )

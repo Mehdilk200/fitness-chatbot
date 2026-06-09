@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { scheduleApi, chatApi } from '../services/api';
 import colorMap from '../../../backend/data/color_map.json';
 import './ScheduleView.css';
+import { toast } from './Toast';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const TIMES = Array.from({ length: 8 }, (_, i) => `${(i * 2 + 6).toString().padStart(2, '0')}:00`);
@@ -10,9 +11,14 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export default function ScheduleView() {
   const [schedule, setSchedule] = useState([]);
   const [filterMuscle, setFilterMuscle] = useState('All');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [viewMode, setViewMode] = useState('Week');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewItem, setViewItem] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [formData, setFormData] = useState({
     muscle_group: colorMap[0]["muscle name"],
@@ -70,6 +76,64 @@ export default function ScheduleView() {
     setShowModal(true);
   };
 
+  const handleCellClick = (day, time, items) => {
+    if (items && items.length > 0) {
+      openViewModal(items[0]);
+    } else {
+      handleOpenModal(day, time);
+    }
+  };
+
+  const openViewModal = (item) => {
+    setViewItem(item);
+    setShowDropdown(false);
+    setShowViewModal(true);
+  };
+
+  const handleViewUpdate = () => {
+    const item = viewItem;
+    if (!item || !item.id) {
+      console.error("handleViewUpdate: missing item or id", item);
+      toast('Error: task data missing', 'error');
+      return;
+    }
+    setShowViewModal(false);
+    setViewItem(null);
+    setShowDropdown(false);
+    handleOpenModal(item.day, item.start_time, item);
+  };
+
+  const handleViewDelete = async () => {
+    if (!viewItem || !viewItem.id) {
+      console.error("handleViewDelete: missing item or id", viewItem);
+      toast('Error: task data missing', 'error');
+      return;
+    }
+    if (window.confirm("Are you sure you want to delete this workout?")) {
+      try {
+        await scheduleApi.deleteScheduleItem(viewItem.id);
+        setShowViewModal(false);
+        setViewItem(null);
+        setShowDropdown(false);
+        toast('Workout deleted', 'success');
+        fetchSchedule();
+      } catch (err) {
+        toast('Failed to delete item', 'error');
+      }
+    }
+  };
+
+  const handleShare = async () => {
+    const text = `Workout: ${viewItem.muscle_group} on ${viewItem.day} at ${viewItem.start_time}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Workout copied to clipboard', 'success');
+    } catch {
+      toast('Failed to copy', 'error');
+    }
+    setShowDropdown(false);
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -106,6 +170,7 @@ export default function ScheduleView() {
 
   // Mini Calendar Logic
   const renderMiniCalendar = () => {
+    const today = new Date();
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
     const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
     const blanks = Array.from({ length: firstDay === 0 ? 6 : firstDay - 1 }, (_, i) => i);
@@ -116,16 +181,19 @@ export default function ScheduleView() {
         <div className="mini-calendar-header">
           <span>{MONTHS[currentDate.getMonth()]}, {currentDate.getFullYear()}</span>
           <div className="mini-nav">
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))}><i className="ph ph-caret-left"></i></button>
-            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))}><i className="ph ph-caret-right"></i></button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}><i className="ph ph-caret-left"></i></button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}><i className="ph ph-caret-right"></i></button>
           </div>
         </div>
         <div className="mini-calendar-grid">
-          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => <div key={d} className="mini-day-name">{d}</div>)}
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <div key={`wd-${i}`} className="mini-day-name">{d}</div>)}
           {blanks.map(b => <div key={`b-${b}`} className="mini-day blank"></div>)}
-          {days.map(d => (
-            <div key={d} className={`mini-day ${d === new Date().getDate() ? 'today' : ''}`}>{d}</div>
-          ))}
+          {days.map(d => {
+            const isToday = d === today.getDate() && currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
+            return (
+              <div key={d} className={`mini-day ${isToday ? 'today' : ''}`}>{d}</div>
+            );
+          })}
         </div>
       </div>
     );
@@ -135,26 +203,36 @@ export default function ScheduleView() {
     e.preventDefault();
     try {
       if (editingItem) {
-        await scheduleApi.updateScheduleItem(editingItem._id, formData);
+        if (!editingItem.id) {
+          toast('Error: task ID missing - try refreshing', 'error');
+          return;
+        }
+        await scheduleApi.updateScheduleItem(editingItem.id, formData);
       } else {
         await scheduleApi.addScheduleItem(formData);
       }
       setShowModal(false);
+      toast('Workout saved successfully', 'success');
       fetchSchedule();
     } catch (err) {
-      alert("Failed to save item");
+      toast('Failed to save item', 'error');
     }
   };
 
   const handleDelete = async () => {
     if (!editingItem) return;
+    if (!editingItem.id) {
+      toast('Error: task ID missing - try refreshing', 'error');
+      return;
+    }
     if (window.confirm("Are you sure you want to delete this workout?")) {
       try {
-        await scheduleApi.deleteScheduleItem(editingItem._id);
+        await scheduleApi.deleteScheduleItem(editingItem.id);
         setShowModal(false);
+        toast('Workout deleted', 'success');
         fetchSchedule();
       } catch (err) {
-        alert("Failed to delete item");
+        toast('Failed to delete item', 'error');
       }
     }
   };
@@ -169,28 +247,60 @@ export default function ScheduleView() {
             <div className="month-selector">
               <span className="current-month-label">{MONTHS[currentDate.getMonth()]}, {currentDate.getFullYear()}</span>
               <div className="month-nav-btns">
-                <button className="nav-btn"><i className="ph ph-caret-left"></i></button>
-                <button className="nav-btn active"><i className="ph ph-caret-right"></i></button>
+                <button className="nav-btn" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}><i className="ph ph-caret-left"></i></button>
+                <button className="nav-btn active" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}><i className="ph ph-caret-right"></i></button>
               </div>
             </div>
           </div>
           
           <div className="header-controls">
             <div className="filter-group">
-              <select 
-                className="filter-select"
-                value={filterMuscle} 
-                onChange={(e) => setFilterMuscle(e.target.value)}
-              >
-                <option value="All">All Muscles</option>
-                {colorMap.map(m => (
-                  <option key={m["muscle name"]} value={m["muscle name"]}>{m["muscle name"].split('(')[0]}</option>
-                ))}
-              </select>
+              <div className="custom-select" tabIndex={0} onBlur={() => setTimeout(() => setShowFilterDropdown(false), 150)}>
+                <button 
+                  className="filter-select-trigger" 
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                >
+                  {filterMuscle !== 'All' && (
+                    <span 
+                      className="filter-color-dot" 
+                      style={{ background: colorMap.find(m => m["muscle name"] === filterMuscle)?.hex }}
+                    ></span>
+                  )}
+                  <span>{filterMuscle === 'All' ? 'All Muscles' : filterMuscle.split('(')[0].trim()}</span>
+                  <i className="ph ph-caret-down"></i>
+                </button>
+                {showFilterDropdown && (
+                  <div className="custom-select-dropdown">
+                    <button 
+                      className={`custom-option ${filterMuscle === 'All' ? 'selected' : ''}`}
+                      onClick={() => { setFilterMuscle('All'); setShowFilterDropdown(false); }}
+                    >
+                      <span className="filter-color-dot" style={{ background: 'transparent', border: '1px solid #ccc' }}></span>
+                      <span>All Muscles</span>
+                    </button>
+                    {colorMap.map(m => (
+                      <button 
+                        key={m["muscle name"]}
+                        className={`custom-option ${filterMuscle === m["muscle name"] ? 'selected' : ''}`}
+                        onClick={() => { setFilterMuscle(m["muscle name"]); setShowFilterDropdown(false); }}
+                      >
+                        <span className="filter-color-dot" style={{ background: m.hex }}></span>
+                        <span>{m["muscle name"].split('(')[0].trim()}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="view-toggle">
-              <button className="toggle-btn active">Week</button>
-              <button className="toggle-btn">Month</button>
+              <button 
+                className={`toggle-btn ${viewMode === 'Week' ? 'active' : ''}`}
+                onClick={() => setViewMode('Week')}
+              >Week</button>
+              <button 
+                className={`toggle-btn ${viewMode === 'Month' ? 'active' : ''}`}
+                onClick={() => setViewMode('Month')}
+              >Month</button>
             </div>
           </div>
         </div>
@@ -211,16 +321,18 @@ export default function ScheduleView() {
                     <div 
                       key={`${day}-${time}`} 
                       className="grid-cell"
-                      onClick={() => handleOpenModal(day, time)}
+                      data-date={day}
+                      data-time={time}
+                      onClick={() => handleCellClick(day, time, items)}
                     >
                       {items.map(item => (
                         <div 
-                          key={item._id} 
+                          key={item.id} 
                           className="workout-card-mini" 
                           style={{ borderLeft: `4px solid ${item.color}`, background: `${item.color}15` }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleOpenModal(day, time, item);
+                            openViewModal(item);
                           }}
                         >
                           <div className="card-top">
@@ -372,6 +484,81 @@ export default function ScheduleView() {
                 <button type="submit" className="btn-primary">Save Changes</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showViewModal && viewItem && (
+        <div className="modal-overlay" onClick={() => { setShowViewModal(false); setShowDropdown(false); }}>
+          <div className="view-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="view-modal-header">
+              <h2>{viewItem.muscle_group.split('(')[1]?.replace(')', '') || viewItem.muscle_group}</h2>
+              <button className="modal-close" onClick={() => { setShowViewModal(false); setShowDropdown(false); }}><i className="ph ph-x"></i></button>
+            </div>
+
+            <div className="three-dot-menu">
+              <button className="three-dot-btn" onClick={() => setShowDropdown(!showDropdown)}>
+                <i className="ph ph-dots-three-vertical"></i>
+              </button>
+              {showDropdown && (
+                <div className="three-dot-dropdown">
+                  <button className="dropdown-item" onClick={handleViewUpdate}>
+                    <i className="ph ph-pencil"></i> Update
+                  </button>
+                  <button className="dropdown-item" onClick={handleShare}>
+                    <i className="ph ph-share"></i> Share
+                  </button>
+                  <button className="dropdown-item danger" onClick={handleViewDelete}>
+                    <i className="ph ph-trash"></i> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="view-modal-body">
+              <div className="view-detail-row">
+                <span className="view-detail-label">Muscle Group</span>
+                <span className="view-detail-value">{viewItem.muscle_group}</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '24px' }}>
+                <div className="view-detail-row">
+                  <span className="view-detail-label">Day</span>
+                  <span className="view-detail-value">{viewItem.day}</span>
+                </div>
+                <div className="view-detail-row">
+                  <span className="view-detail-label">Time</span>
+                  <span className="view-detail-value">{viewItem.start_time} - {viewItem.end_time}</span>
+                </div>
+                {viewItem.calories > 0 && (
+                  <div className="view-detail-row">
+                    <span className="view-detail-label">Calories</span>
+                    <span className="view-detail-value">{viewItem.calories} kcal</span>
+                  </div>
+                )}
+              </div>
+
+              {viewItem.image_url && (
+                <div className="view-detail-row">
+                  <span className="view-detail-label">Workout Image</span>
+                  <div className="view-image-container">
+                    <img src={viewItem.image_url} alt="workout" />
+                  </div>
+                </div>
+              )}
+
+              {viewItem.notes && (
+                <div className="view-detail-row">
+                  <span className="view-detail-label">Notes</span>
+                  <span className="view-detail-value notes-text">{viewItem.notes}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="view-modal-footer">
+              <button className="btn-secondary-outline" onClick={() => { setShowViewModal(false); setShowDropdown(false); }}>Close</button>
+              <button className="btn-primary" onClick={handleViewUpdate}>Edit Workout</button>
+            </div>
           </div>
         </div>
       )}

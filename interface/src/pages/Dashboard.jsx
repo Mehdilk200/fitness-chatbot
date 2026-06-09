@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authApi } from '../services/api';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useOutletContext } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
+import WearableModal from '../components/WearableModal';
+import { authApi, wearableApi } from '../services/api';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -17,9 +18,9 @@ import {
 import { Line, Doughnut } from 'react-chartjs-2';
 import faceImg from '../assets/face.jpg';
 import backImg from '../assets/back.jpg';
-import logoImg from '../assets/logoelet.png';
 import colorMap from '../../../backend/data/color_map.json';
 import ScheduleView from '../components/ScheduleView';
+import MapRunning from '../components/MapRunning';
 
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler);
@@ -44,24 +45,10 @@ const muscleToApiMap = {
 };
 
 export default function Dashboard({ theme, toggleTheme }) {
+  const { userEmail } = useOutletContext();
   const [activeTab, setActiveTab] = useState('Nutrition');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
-  const navigate = useNavigate();
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = await authApi.getMe();
-        setUserEmail(data.email);
-      } catch {
-        navigate('/auth');
-      }
-    };
-    fetchUser();
-  }, [navigate]);
+  const [userName, setUserName] = useState('');
+  const [userFullName, setUserFullName] = useState('');
 
   // Nutrition Graphe Data
   const activityData = {
@@ -88,22 +75,202 @@ export default function Dashboard({ theme, toggleTheme }) {
     }]
   };
 
-  // Workouts Line Chart V3
-  const workoutChartData = {
-    labels: ['2 Aug', '3 Aug', '4 Aug', '5 Aug', '6 Aug', '7 Aug', '8 Aug'],
-    datasets: [{
-      label: 'Distance',
-      data: [5, 6.2, 4.8, 8.5, 5.5, 7.6, 6.9],
-      borderColor: '#c8f135',
-      backgroundColor: 'rgba(200, 241, 53, 0.05)',
-      tension: 0.4,
-      fill: true,
-      pointRadius: (ctx) => ctx.dataIndex === 5 ? 8 : 4,
-      pointBorderWidth: (ctx) => ctx.dataIndex === 5 ? 4 : 2,
-      pointBorderColor: '#fff',
-      pointBackgroundColor: (ctx) => ctx.dataIndex === 5 ? '#ff5c5c' : '#c8f135',
-    }]
+  // Workout Tab State
+  const [activity, setActivity] = useState('Running');
+  const [showActivityDropdown, setShowActivityDropdown] = useState(false);
+  const [timeRange, setTimeRange] = useState('week');
+
+  const timeRanges = ['today', 'week'];
+
+  // Wearable device state (Strava / Fitbit)
+  const [wearableConnected, setWearableConnected] = useState(false);
+  const [wearableProviders, setWearableProviders] = useState([]);
+  const [isWearableModalOpen, setIsWearableModalOpen] = useState(false);
+
+  useEffect(() => {
+    wearableApi.getStatus().then(res => {
+      const conns = res.connections || [];
+      setWearableProviders(conns);
+      setWearableConnected(conns.some(c => c.connected));
+    }).catch(() => {});
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('wearable') === 'connected') {
+      setIsWearableModalOpen(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (params.get('wearable_error')) {
+      setIsWearableModalOpen(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  const handleWearableConnected = () => {
+    wearableApi.getStatus().then(res => {
+      const conns = res.connections || [];
+      setWearableProviders(conns);
+      setWearableConnected(conns.some(c => c.connected));
+    }).catch(() => {});
   };
+
+  const activities = [
+    { id: 'Running', icon: 'ph-person-simple-run', label: 'Running' },
+    { id: 'Cycling', icon: 'ph-bicycle', label: 'Cycling' },
+    { id: 'Walking', icon: 'ph-person-simple-walk', label: 'Walking' },
+  ];
+
+  const activityDataMap = {
+    Running: {
+      icon: 'ph-person-simple-run',
+      chartData: {
+        labels: ['2 Aug', '3 Aug', '4 Aug', '5 Aug', '6 Aug', '7 Aug', '8 Aug'],
+        datasets: [{
+          label: 'Distance',
+          data: [5, 6.2, 4.8, 8.5, 5.5, 7.6, 6.9],
+          borderColor: '#c8f135',
+          backgroundColor: 'rgba(200, 241, 53, 0.05)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: (ctx) => ctx.dataIndex === 5 ? 8 : 4,
+          pointBorderWidth: (ctx) => ctx.dataIndex === 5 ? 4 : 2,
+          pointBorderColor: '#fff',
+          pointBackgroundColor: (ctx) => ctx.dataIndex === 5 ? '#ff5c5c' : '#c8f135',
+        }]
+      },
+      mainMetric: '7.6 km',
+      metrics: [
+        { className: 'blue', icon: 'ph-path', lab: 'Total Distance', val: '415.2 km' },
+        { className: 'yellow', icon: 'ph-footprints', lab: 'Total Steps', val: '58,827' },
+        { className: 'lime', icon: 'ph-fire', lab: 'Total Calories', val: '25,800 cal' },
+        { className: 'purple', icon: 'ph-clock', lab: 'Total Time', val: '51 hrs 36 mins' },
+      ],
+      summary: {
+        label: 'Running Activity',
+        icon: 'ph-person-simple-run',
+        start: { name: 'Central Park Entrance', time: '6:30 AM' },
+        finish: { name: 'Central Park North Gate', time: '7:20 AM' },
+        distance: '8 km',
+        details: [
+          { val: '50', lab: 'mins' },
+          { val: '10,500', lab: 'steps' },
+          { val: '10', lab: 'mins/km' },
+          { val: '450', lab: 'cal' },
+        ],
+        heartRate: { avg: '140', peak: '160', trend: '+3.5%' },
+      },
+    },
+    Cycling: {
+      icon: 'ph-bicycle',
+      chartData: {
+        labels: ['2 Aug', '3 Aug', '4 Aug', '5 Aug', '6 Aug', '7 Aug', '8 Aug'],
+        datasets: [{
+          label: 'Distance',
+          data: [12, 15.5, 10.2, 20.1, 14.8, 18.3, 16.7],
+          borderColor: '#54a0ff',
+          backgroundColor: 'rgba(84, 160, 255, 0.05)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: (ctx) => ctx.dataIndex === 5 ? 8 : 4,
+          pointBorderWidth: (ctx) => ctx.dataIndex === 5 ? 4 : 2,
+          pointBorderColor: '#fff',
+          pointBackgroundColor: (ctx) => ctx.dataIndex === 5 ? '#ff5c5c' : '#54a0ff',
+        }]
+      },
+      mainMetric: '18.3 km',
+      metrics: [
+        { className: 'blue', icon: 'ph-path', lab: 'Total Distance', val: '892.5 km' },
+        { className: 'yellow', icon: 'ph-footprints', lab: 'Total Pedals', val: '124,830' },
+        { className: 'lime', icon: 'ph-fire', lab: 'Total Calories', val: '38,200 cal' },
+        { className: 'purple', icon: 'ph-clock', lab: 'Total Time', val: '42 hrs 18 mins' },
+      ],
+      summary: {
+        label: 'Cycling Activity',
+        icon: 'ph-bicycle',
+        start: { name: 'Boulevard de la Corniche', time: '7:00 AM' },
+        finish: { name: 'Ain Diab Beach', time: '8:15 AM' },
+        distance: '18.3 km',
+        details: [
+          { val: '75', lab: 'mins' },
+          { val: '18,500', lab: 'pedals' },
+          { val: '24', lab: 'km/h' },
+          { val: '680', lab: 'cal' },
+        ],
+        heartRate: { avg: '135', peak: '155', trend: '+2.1%' },
+      },
+    },
+    Walking: {
+      icon: 'ph-person-simple-walk',
+      chartData: {
+        labels: ['2 Aug', '3 Aug', '4 Aug', '5 Aug', '6 Aug', '7 Aug', '8 Aug'],
+        datasets: [{
+          label: 'Distance',
+          data: [3.2, 4.1, 2.8, 5.5, 3.9, 4.8, 6.2],
+          borderColor: '#ff9f43',
+          backgroundColor: 'rgba(255, 159, 67, 0.05)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: (ctx) => ctx.dataIndex === 5 ? 8 : 4,
+          pointBorderWidth: (ctx) => ctx.dataIndex === 5 ? 4 : 2,
+          pointBorderColor: '#fff',
+          pointBackgroundColor: (ctx) => ctx.dataIndex === 5 ? '#ff5c5c' : '#ff9f43',
+        }]
+      },
+      mainMetric: '4.8 km',
+      metrics: [
+        { className: 'blue', icon: 'ph-path', lab: 'Total Distance', val: '285.4 km' },
+        { className: 'yellow', icon: 'ph-footprints', lab: 'Total Steps', val: '92,450' },
+        { className: 'lime', icon: 'ph-fire', lab: 'Total Calories', val: '12,600 cal' },
+        { className: 'purple', icon: 'ph-clock', lab: 'Total Time', val: '68 hrs 12 mins' },
+      ],
+      summary: {
+        label: 'Walking Activity',
+        icon: 'ph-person-simple-walk',
+        start: { name: 'Home', time: '6:00 AM' },
+        finish: { name: 'Office', time: '7:15 AM' },
+        distance: '4.8 km',
+        details: [
+          { val: '75', lab: 'mins' },
+          { val: '8,200', lab: 'steps' },
+          { val: '16', lab: 'mins/km' },
+          { val: '280', lab: 'cal' },
+        ],
+        heartRate: { avg: '95', peak: '110', trend: '+1.2%' },
+      },
+    },
+  };
+
+  const currentActivity = activityDataMap[activity];
+
+  const displayData = useMemo(() => {
+    if (timeRange === 'today') {
+      const ca = currentActivity;
+      const lastVal = ca.chartData.datasets[0].data.slice(-1)[0];
+      const lastLabel = ca.chartData.labels[ca.chartData.labels.length - 1];
+      const divideVal = (v) => {
+        const str = String(v);
+        const num = parseFloat(str.replace(/,/g, ''));
+        if (isNaN(num)) return v;
+        return Math.round(num / 7).toLocaleString();
+      };
+      return {
+        ...ca,
+        chartData: {
+          labels: [lastLabel],
+          datasets: ca.chartData.datasets.map(ds => ({
+            ...ds,
+            data: [lastVal],
+            pointRadius: 6,
+            pointBorderWidth: 3,
+          }))
+        },
+        mainMetric: `${lastVal} km`,
+        metrics: ca.metrics.map(m => ({
+          ...m,
+          val: `${divideVal(m.val)}${m.val.includes('cal') ? ' cal' : m.val.includes('hrs') ? ' hrs' : m.val.includes('km') ? ' km' : ''}`
+        })),
+      };
+    }
+    return currentActivity;
+  }, [timeRange, currentActivity]);
 
   // AI Coach State
   const [selectedMuscle, setSelectedMuscle] = useState(colorMap[0]);
@@ -112,6 +279,15 @@ export default function Dashboard({ theme, toggleTheme }) {
   const [exercises, setExercises] = useState([]);
   const [currentExIndex, setCurrentExIndex] = useState(0);
   const [loadingEx, setLoadingEx] = useState(false);
+
+  const handleImageError = useCallback((index) => {
+    const failedEx = exercises[index];
+    if (failedEx) console.warn('Broken GIF link:', failedEx.gifUrl, '-', failedEx.name);
+    setExercises(prev => {
+      const filtered = prev.filter((_, i) => i !== index);
+      return filtered;
+    });
+  }, [exercises]);
 
   // Filter muscles based on search
   const filteredMuscles = colorMap.filter(m => 
@@ -141,43 +317,19 @@ export default function Dashboard({ theme, toggleTheme }) {
     }
   }, [activeTab, selectedMuscle]);
 
+  useEffect(() => {
+    authApi.getMe().then(data => {
+      if (data.first_name) setUserName(data.first_name);
+      const full = [data.first_name, data.last_name].filter(Boolean).join(' ');
+      if (full) setUserFullName(full);
+    }).catch(() => {});
+  }, []);
+
   const nextEx = () => setCurrentExIndex(prev => (prev + 1) % exercises.length);
 
   return (
-
-    <div className="app-shell">
-      <aside className={`sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
-        <div className="sidebar-header">
-          <Link to="/" className="logo logo-img-wrap">
-            <img src={logoImg} alt="ELITEFIT" className="logo-img" />
-            <span className="logo-text">ELITEFI<span>T</span></span>
-          </Link>
-          <button className="sidebar-close" onClick={toggleSidebar} aria-label={sidebarOpen ? 'Fermer le menu' : 'Ouvrir le menu'}>
-            <i className={`ph ${sidebarOpen ? 'ph-caret-left' : 'ph-list'}`}></i>
-          </button>
-        </div>
-        <nav className="sidebar-nav">
-          <Link to="/chat" className="nav-item"><span className="ni"><i className="ph ph-chat-circle-text"></i></span><span className="nav-text">Chat</span></Link>
-          <Link to="/dashboard" className="nav-item active"><span className="ni"><i className="ph ph-chart-bar"></i></span><span className="nav-text">Dashboard</span></Link>
-          <Link to="/profile" className="nav-item"><span className="ni"><i className="ph ph-user"></i></span><span className="nav-text">Profil</span></Link>
-        </nav>
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">{userEmail?.charAt(0).toUpperCase() || '?'}</div>
-            <div className="user-details">
-              <span>{userEmail || 'Chargement...'}</span>
-              <span className="user-plan">Plan Gratuit</span>
-            </div>
-          </div>
-          <button className="btn-logout" onClick={() => { localStorage.clear(); navigate('/auth'); }}>
-            <i className="ph ph-sign-out"></i>
-            <span className="logout-text">Déconnexion</span>
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main">
-        <div className="dash-content compact">
+    <main className="dash-main">
+      <div className="dash-content compact">
           {/* Header & Tabs */}
           <div className="dash-header-top">
             <div className="dash-nav-pills">
@@ -193,9 +345,11 @@ export default function Dashboard({ theme, toggleTheme }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <button className="topbar-btn"><i className="ph ph-magnifying-glass"></i></button>
-              <button className="topbar-btn" style={{ background: 'var(--bg-card)', borderRadius: '12px', width: 'auto', padding: '0 12px', gap: '8px', fontSize: '12px', fontWeight: '700' }}><i className="ph ph-calendar"></i> Calendar</button>
-              <Link to="/profile" className="btn-primary" style={{ borderRadius: '12px', padding: '6px 12px', fontSize: '12px' }}><i className="ph ph-user-circle"></i> Mon profil</Link>
-              <button className="btn-primary" style={{ borderRadius: '12px', padding: '6px 12px', fontSize: '12px' }}><i className="ph ph-chat-circle"></i> ChatBot AI</button>
+              <Link to="/profile" className="header-action-btn"><i className="ph ph-user-circle"></i> Mon profil</Link>
+              <button className="header-action-btn"><i className="ph ph-chat-circle"></i> ChatBot AI</button>
+              <button className={`header-action-btn ${wearableConnected ? 'status-connected' : 'status-disconnected'}`} onClick={() => setIsWearableModalOpen(true)}>
+                <i className={`ph ${wearableConnected ? 'ph-plugs-connected' : 'ph-plugs'}`}></i> Connected
+              </button>
               <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
             </div>
           </div>
@@ -203,7 +357,7 @@ export default function Dashboard({ theme, toggleTheme }) {
           {activeTab === 'Nutrition' && (
             <>
               <div className="dash-user-greet">
-                <h1 style={{ fontSize: '24px' }}>Welcome Back, Alex! Let's crush today</h1>
+                <h1 style={{ fontSize: '24px' }}>Hello, {userName || 'Champion'}! Ready to dominate your workout today?</h1>
                 <p style={{ fontSize: '13px' }}>Here's what's happening at your gym today</p>
               </div>
 
@@ -312,8 +466,19 @@ export default function Dashboard({ theme, toggleTheme }) {
                   <h1 style={{ fontSize: '32px' }}>Workout Tracker</h1>
                   <p>Achieve Your Goals with Detailed Tracking</p>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div className="activity-picker"><i className="ph ph-person-simple-run"></i> Running <i className="ph ph-caret-down"></i></div>
+                <div style={{ display: 'flex', gap: '12px', position: 'relative' }}>
+                  <div className="activity-picker" onClick={() => setShowActivityDropdown(prev => !prev)}>
+                    <i className={`ph ${currentActivity.icon}`}></i> {activity} <i className="ph ph-caret-down"></i>
+                  </div>
+                  {showActivityDropdown && (
+                    <div className="activity-dropdown">
+                      {activities.map(a => (
+                        <div key={a.id} className={`activity-option ${activity === a.id ? 'active' : ''}`} onClick={() => { setActivity(a.id); setShowActivityDropdown(false); }}>
+                          <i className={`ph ${a.icon}`}></i> {a.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <button className="btn-primary" style={{ borderRadius: 'var(--radius-full)' }}>Add Activity</button>
                 </div>
               </div>
@@ -323,23 +488,29 @@ export default function Dashboard({ theme, toggleTheme }) {
                   <div className="workout-card">
                     <div className="card-v2-header">
                       <h3>Activity</h3>
-                      <div style={{ background: 'var(--bg-elevated)', padding: '4px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700' }}><i className="ph ph-calendar"></i> Last 7 Days <i className="ph ph-caret-down"></i></div>
+                      <div className="time-range-toggle">
+                        {timeRanges.map(t => (
+                          <button key={t} className={`time-range-btn ${timeRange === t ? 'active' : ''}`} onClick={() => setTimeRange(t)}>{t === 'today' ? 'Today' : 'Week'}</button>
+                        ))}
+                      </div>
                     </div>
                     <div style={{ height: '200px' }}>
-                      <Line data={workoutChartData} options={{ 
+                      <Line data={displayData.chartData} options={{ 
                         responsive: true, 
                         maintainAspectRatio: false, 
                         plugins: { legend: { display: false } },
                         scales: { x: { grid: { display: false } }, y: { border: { dash: [5, 5] } } }
                       }} />
                     </div>
-                    <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '16px', fontWeight: '800' }}>7.6 km</div>
+                    <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '16px', fontWeight: '800' }}>{displayData.mainMetric}</div>
                     
                     <div className="metrics-v3">
-                      <div className="m-card-v3 blue"><i className="ph ph-path"></i><span className="lab">Total Distance</span><span className="val">415.2 km</span></div>
-                      <div className="m-card-v3 yellow"><i className="ph ph-footprints"></i><span className="lab">Total Steps</span><span className="val">58,827</span></div>
-                      <div className="m-card-v3 lime"><i className="ph ph-fire"></i><span className="lab">Total Calories</span><span className="val">25,800 cal</span></div>
-                      <div className="m-card-v3 purple"><i className="ph ph-clock"></i><span className="lab">Total Time</span><span className="val">51 hrs 36 mins</span></div>
+                      {displayData.metrics.map((m, i) => (
+                        <div key={i} className={`m-card-v3 ${m.className}`}>
+                          <div className="m-card-v3-top"><i className={`ph ${m.icon}`}></i><span className="lab">{m.lab}</span></div>
+                          <span className="val">{m.val}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -374,63 +545,49 @@ export default function Dashboard({ theme, toggleTheme }) {
                 </div>
 
                 <div className="workout-right-col">
-                  <div className="map-v3">
-                    <div className="map-v3-overlay">
-                      <div className="map-v3-search">
-                        <input type="text" placeholder="Search Route" defaultValue="Central Park, Manhattan" />
-                        <button type="button" className="map-search-btn">Search</button>
-                      </div>
-                      <div className="zoom-ctrls">
-                        <button className="zoom-btn" style={{ width: '32px', height: '32px', borderRadius: '6px' }}>+</button>
-                        <button className="zoom-btn" style={{ width: '32px', height: '32px', borderRadius: '6px' }}>-</button>
-                      </div>
-                    </div>
-                    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} viewBox="0 0 1200 540">
-                      <path d="M400,100 L500,80 L600,120 L700,90 L850,200 L800,300 L600,350 L450,300 L400,200 Z" fill="rgba(200, 241, 53, 0.1)" stroke="#000" strokeWidth="4" strokeLinejoin="round" />
-                      <circle cx="400" cy="100" r="10" fill="#000" />
-                      <circle cx="400" cy="100" r="6" fill="#c8f135" />
-                    </svg>
-                  </div>
+                  <MapRunning accessToken={import.meta.env.VITE_BOXMAP} />
 
                   <div className="summary-v3">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', fontWeight: '700' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(84, 160, 255, 0.1)', color: '#54a0ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className="ph ph-person-simple-run"></i></div>
-                        Running Activity
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(84, 160, 255, 0.1)', color: '#54a0ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className={`ph ${displayData.summary.icon}`}></i></div>
+                        {displayData.summary.label}
                       </div>
-                      <div style={{ background: 'var(--bg-elevated)', padding: '4px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', color: '#afb42b' }}><i className="ph ph-calendar"></i> Today <i className="ph ph-caret-down"></i></div>
+                      <div className="time-range-toggle">
+                        {timeRanges.map(t => (
+                          <button key={t} className={`time-range-btn ${timeRange === t ? 'active' : ''}`} onClick={() => setTimeRange(t)}>{t === 'today' ? 'Today' : 'Week'}</button>
+                        ))}
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '12px 0' }}>
                        <div style={{ flex: 1 }}>
                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Start</div>
-                         <div style={{ fontSize: '15px', fontWeight: '800' }}>Central Park Entrance</div>
-                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><i className="ph ph-clock"></i> 6:30 AM</div>
+                         <div style={{ fontSize: '15px', fontWeight: '800' }}>{displayData.summary.start.name}</div>
+                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><i className="ph ph-clock"></i> {displayData.summary.start.time}</div>
                        </div>
                        <div style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
-                         <div style={{ fontSize: '12px', fontWeight: '800', background: 'var(--bg-card)', padding: '0 8px', position: 'relative', zIndex: 1 }}>8 km</div>
+                         <div style={{ fontSize: '12px', fontWeight: '800', background: 'var(--bg-card)', padding: '0 8px', position: 'relative', zIndex: 1 }}>{displayData.summary.distance}</div>
                          <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', borderBottom: '2px dashed var(--border)', zIndex: 0 }}></div>
                        </div>
                        <div style={{ flex: 1, textAlign: 'right' }}>
                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Finish</div>
-                         <div style={{ fontSize: '15px', fontWeight: '800' }}>Central Park North Gate</div>
-                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><i className="ph ph-clock"></i> 7:20 AM</div>
+                         <div style={{ fontSize: '15px', fontWeight: '800' }}>{displayData.summary.finish.name}</div>
+                         <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><i className="ph ph-clock"></i> {displayData.summary.finish.time}</div>
                        </div>
                     </div>
 
                     <div className="summary-details-grid">
-                      <div className="detail-box"><span className="val">50</span><span className="lab">mins</span></div>
-                      <div className="detail-box"><span className="val">10,500</span><span className="lab">steps</span></div>
-                      <div className="detail-box"><span className="val">10</span><span className="lab">mins/km</span></div>
-                      <div className="detail-box"><span className="val">450</span><span className="lab">cal</span></div>
-                      
-                      <div className="heart-widget" style={{ padding: '16px', gap: '4px' }}>
+                      {displayData.summary.details.map((d, i) => (
+                        <div key={i} className="detail-box"><span className="val">{d.val}</span><span className="lab">{d.lab}</span></div>
+                      ))}
+                      <div className="heart-widget">
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', opacity: 0.7 }}>Heart Beat <i className="ph ph-heart"></i></div>
-                        <div style={{ display: 'flex', gap: '24px', margin: '8px 0' }}>
-                          <div><div style={{ fontSize: '10px', opacity: 0.6 }}>Average</div><div style={{ fontSize: '18px', fontWeight: '800' }}>140 bpm</div></div>
-                          <div><div style={{ fontSize: '10px', opacity: 0.6 }}>Peak</div><div style={{ fontSize: '18px', fontWeight: '800' }}>160 bpm</div></div>
+                        <div className="heart-row">
+                          <div><span style={{ fontSize: '10px', opacity: 0.6 }}>Avg </span><span style={{ fontSize: '16px', fontWeight: '800' }}>{displayData.summary.heartRate.avg} bpm</span></div>
+                          <div><span style={{ fontSize: '10px', opacity: 0.6 }}>Peak </span><span style={{ fontSize: '16px', fontWeight: '800' }}>{displayData.summary.heartRate.peak} bpm</span></div>
+                          <span className="heart-trend"><i className="ph ph-trend-up"></i> {displayData.summary.heartRate.trend}</span>
                         </div>
-                        <div style={{ fontSize: '11px', fontWeight: '800', color: '#2e7d32' }}><i className="ph ph-trend-up"></i> 3.5% vs last day</div>
                       </div>
                     </div>
                   </div>
@@ -496,16 +653,25 @@ export default function Dashboard({ theme, toggleTheme }) {
                         {/* Pectoralis (Chest) - Center chest area */}
                         <circle cx="150" cy="120" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Pectoralis Major (Chest)"))} title="Pectoralis Major (Chest)" />
                         {/* Deltoids (Shoulders) - Shoulder area */}
-                        <circle cx="90" cy="90" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
-                        <circle cx="210" cy="90" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                        <circle cx="85" cy="95" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                        <circle cx="215" cy="95" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
                         {/* Biceps - Upper arm */}
-                        <circle cx="60" cy="140" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
-                        <circle cx="240" cy="140" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
+                        <circle cx="55" cy="145" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
+                        <circle cx="245" cy="145" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
+                        {/* Forearms - Lower arm */}
+                        <circle cx="55" cy="195" r="12" fill="rgba(200, 180, 160, 0.6)" stroke="rgba(200, 180, 160, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Forearms (Brachioradialis / Extensors)"))} title="Forearms (Brachioradialis / Extensors)" />
+                        <circle cx="245" cy="195" r="12" fill="rgba(200, 180, 160, 0.6)" stroke="rgba(200, 180, 160, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Forearms (Brachioradialis / Extensors)"))} title="Forearms (Brachioradialis / Extensors)" />
                         {/* Abs - Center abdomen */}
                         <circle cx="150" cy="200" r="14" fill="rgba(163, 56, 93, 0.6)" stroke="rgba(163, 56, 93, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Rectus Abdominis (Abs)"))} title="Rectus Abdominis (Abs)" />
-                        {/* Quadriceps - Thigh */}
-                        <circle cx="130" cy="290" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Rectus Femoris (Quadriceps)"))} title="Rectus Femoris (Quadriceps)" />
-                        <circle cx="170" cy="290" r="14" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Medialis (Quadriceps)"))} title="Vastus Medialis (Quadriceps)" />
+                        {/* Serratus Anterior / Obliques - Sides of torso */}
+                        <circle cx="100" cy="210" r="12" fill="rgba(200, 130, 50, 0.6)" stroke="rgba(200, 130, 50, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Serratus Anterior & External Obliques"))} title="Serratus Anterior & External Obliques" />
+                        <circle cx="200" cy="210" r="12" fill="rgba(200, 130, 50, 0.6)" stroke="rgba(200, 130, 50, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Serratus Anterior & External Obliques"))} title="Serratus Anterior & External Obliques" />
+                        {/* Quadriceps - Front thigh */}
+                        <circle cx="115" cy="290" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Rectus Femoris (Quadriceps)"))} title="Rectus Femoris (Quadriceps)" />
+                        <circle cx="185" cy="290" r="14" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Medialis (Quadriceps)"))} title="Vastus Medialis (Quadriceps)" />
+                        {/* Vastus Lateralis - Outer thigh */}
+                        <circle cx="100" cy="300" r="12" fill="rgba(90, 140, 200, 0.6)" stroke="rgba(90, 140, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Lateralis (Quadriceps)"))} title="Vastus Lateralis (Quadriceps)" />
+                        <circle cx="200" cy="300" r="12" fill="rgba(90, 140, 200, 0.6)" stroke="rgba(90, 140, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Lateralis (Quadriceps)"))} title="Vastus Lateralis (Quadriceps)" />
                         {/* Calves - Lower leg */}
                         <circle cx="130" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
                         <circle cx="170" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
@@ -515,18 +681,24 @@ export default function Dashboard({ theme, toggleTheme }) {
                       <img src={backImg} alt="Anatomy Back" className="anatomy-image" />
                       <svg className="anatomy-overlay" viewBox="0 0 300 400">
                         {/* Trapezius - Upper back/neck */}
-                        <circle cx="150" cy="70" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Trapezius (Upper Back / Neck)"))} title="Trapezius (Upper Back / Neck)" />
+                        <circle cx="150" cy="85" r="14" fill="rgba(200, 160, 100, 0.6)" stroke="rgba(200, 160, 100, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Trapezius (Upper Back / Neck)"))} title="Trapezius (Upper Back / Neck)" />
+                        {/* Posterior Deltoids - Back shoulders */}
+                        <circle cx="85" cy="95" r="12" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                        <circle cx="215" cy="95" r="12" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                        {/* Triceps - Posterior arm */}
+                        <circle cx="55" cy="145" r="12" fill="rgba(160, 180, 200, 0.6)" stroke="rgba(160, 180, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Triceps Brachii"))} title="Triceps Brachii" />
+                        <circle cx="245" cy="145" r="12" fill="rgba(160, 180, 200, 0.6)" stroke="rgba(160, 180, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Triceps Brachii"))} title="Triceps Brachii" />
                         {/* Lats - Back middle */}
-                        <circle cx="130" cy="160" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
-                        <circle cx="170" cy="160" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
+                        <circle cx="120" cy="165" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
+                        <circle cx="180" cy="165" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
                         {/* Erector Spinae (Lower back) - Center lower back */}
                         <circle cx="150" cy="240" r="14" fill="rgba(163, 56, 93, 0.6)" stroke="rgba(163, 56, 93, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Erector Spinae (Lower Back)"))} title="Erector Spinae (Lower Back)" />
                         {/* Glutes - Buttocks */}
-                        <circle cx="130" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
-                        <circle cx="170" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
+                        <circle cx="125" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
+                        <circle cx="175" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
                         {/* Hamstrings - Back thigh */}
-                        <circle cx="130" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
-                        <circle cx="170" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
+                        <circle cx="125" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
+                        <circle cx="175" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
                         {/* Calves - Back lower leg */}
                         <circle cx="130" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
                         <circle cx="170" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
@@ -544,17 +716,27 @@ export default function Dashboard({ theme, toggleTheme }) {
                       {loadingEx ? (
                         <div className="loading-spinner">Loading exercises...</div>
                       ) : exercises.length > 0 ? (
-                        <div className="exercise-gif-container">
-                          <img src={exercises[currentExIndex].gifUrl} alt={exercises[currentExIndex].name} />
-                          <div className="carousel-nav">
-                            <div className="carousel-dots">
-                              {exercises.slice(0, 3).map((_, idx) => (
-                                <div key={idx} className={`dot ${idx === currentExIndex % 3 ? 'active' : ''}`}></div>
+                        <>
+                          <div className="exercise-gif-container">
+                            {exercises[currentExIndex] && (
+                              <img src={exercises[currentExIndex]?.gifUrl} alt={exercises[currentExIndex]?.name} onError={() => handleImageError(currentExIndex)} />
+                            )}
+                          </div>
+                          <div className="exercise-gallery-row">
+                            <div className="exercise-gallery">
+                              {exercises.map((ex, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`gallery-item ${idx === currentExIndex ? 'active' : ''}`}
+                                  onClick={() => setCurrentExIndex(idx)}
+                                >
+                                  <img src={ex.gifUrl} alt={ex.name} onError={() => handleImageError(idx)} />
+                                </div>
                               ))}
                             </div>
-                            <button className="carousel-next" onClick={nextEx}><i className="ph ph-arrow-right"></i></button>
+                            <button className="gallery-skip" onClick={nextEx} title="Next exercise"><i className="ph ph-caret-circle-right"></i></button>
                           </div>
-                        </div>
+                        </>
                       ) : (
                         <div className="no-data">No exercises found for this muscle.</div>
                       )}
@@ -592,7 +774,8 @@ export default function Dashboard({ theme, toggleTheme }) {
           )}
         </div>
 
+        <WearableModal isOpen={isWearableModalOpen} onClose={() => setIsWearableModalOpen(false)} onConnected={handleWearableConnected} />
+
       </main>
-    </div>
   );
 }

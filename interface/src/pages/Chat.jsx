@@ -1,29 +1,54 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { chatApi, authApi } from '../services/api';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { authApi, chatApi } from '../services/api';
 import ThemeToggle from '../components/ThemeToggle';
 import ReactMarkdown from 'react-markdown';
+import Fuse from 'fuse.js';
 import logoImg from '../assets/logoelet.png';
 
 export default function Chat({ theme, toggleTheme }) {
+  const { userEmail } = useOutletContext();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
   const [sessions, setSessions] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null); // { file, previewUrl }
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [userName, setUserName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
+  const filteredSessions = useMemo(() => {
+    if (!searchQuery.trim()) return sessions;
+    const fuse = new Fuse(sessions, {
+      keys: [
+        { name: 'title', weight: 2 },
+        { name: 'messages.content', weight: 1 },
+      ],
+      threshold: 0.4,
+      includeScore: true,
+    });
+    return fuse.search(searchQuery).map(r => r.item);
+  }, [sessions, searchQuery]);
+
   useEffect(() => {
-    const fetchUser = async () => {
+    authApi.getMe().then(data => {
+      if (data.first_name) setUserName(data.first_name);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const data = await authApi.getMe();
-        setUserEmail(data.email);
         const historyData = await chatApi.getHistory();
         if (historyData && historyData.sessions) {
           setSessions(historyData.sessions);
@@ -36,12 +61,18 @@ export default function Chat({ theme, toggleTheme }) {
         navigate('/auth');
       }
     };
-    fetchUser();
+    fetchData();
   }, [navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const handleClickOutside = () => setMenuOpen(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const suggestions = useMemo(() => [
     { label: 'Programme semaine', text: 'Programme musculation cette semaine' },
@@ -50,7 +81,6 @@ export default function Chat({ theme, toggleTheme }) {
     { label: 'Perte de poids', text: 'Plan pour perdre de la graisse' },
   ], []);
 
-  const toggleSidebar = () => setSidebarOpen(prev => !prev);
   const toggleHistory = () => setHistoryOpen(prev => !prev);
   const handleClearHistory = async () => {
     if (sessionId) {
@@ -76,6 +106,45 @@ export default function Chat({ theme, toggleTheme }) {
     if (window.innerWidth < 768) setHistoryOpen(false);
   };
 
+  const refreshSessions = async () => {
+    try {
+      const historyData = await chatApi.getHistory();
+      if (historyData && historyData.sessions) setSessions(historyData.sessions);
+    } catch(e) {}
+  };
+
+  const handleRename = async (id) => {
+    if (!renameValue.trim()) { setRenamingId(null); return; }
+    try {
+      await chatApi.renameSession(id, renameValue.trim());
+      await refreshSessions();
+    } catch(e) { console.error('Rename failed', e); }
+    setRenamingId(null);
+    setMenuOpen(null);
+  };
+
+  const handleArchive = async (id) => {
+    try {
+      await chatApi.archiveSession(id);
+      await refreshSessions();
+    } catch(e) { console.error('Archive failed', e); }
+    setMenuOpen(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmDelete) return;
+    try {
+      await chatApi.deleteSession(confirmDelete);
+      if (sessionId === confirmDelete) {
+        setSessionId(null);
+        setMessages([]);
+      }
+      await refreshSessions();
+    } catch(e) { console.error('Delete failed', e); }
+    setConfirmDelete(null);
+    setMenuOpen(null);
+  };
+
   const historyItems = useMemo(
     () => {
       if (!sessions || sessions.length === 0) return [];
@@ -86,27 +155,17 @@ export default function Chat({ theme, toggleTheme }) {
 
   const handleSendMessage = async (text) => {
     const messageText = text || input;
-    if ((!messageText.trim() && !selectedImage) || loading) return;
+    if ((!messageText.trim() && !uploadedImageUrl) || loading) return;
 
-    const newUserMessage = { role: 'user', content: messageText, image_preview: selectedImage?.previewUrl };
+    const newUserMessage = { role: 'user', content: messageText, image_url: uploadedImageUrl };
     setMessages(prev => [...prev, newUserMessage]);
     setInput('');
     setLoading(true);
 
-    // Upload image if any
-    let uploadedImageUrl = null;
-    if (selectedImage) {
-      try {
-        const res = await chatApi.uploadFile(selectedImage.file);
-        uploadedImageUrl = res.url;
-      } catch {}
-      handleCancelImage();
-    }
-
     const finalText = messageText || (uploadedImageUrl ? "Analyse cette image." : '');
 
     try {
-      const data = await chatApi.sendMessage(finalText, sessionId);
+      const data = await chatApi.sendMessage(finalText, sessionId, uploadedImageUrl);
       setSessionId(data.session_id);
       const botMessage = {
         role: 'assistant',
@@ -114,81 +173,43 @@ export default function Chat({ theme, toggleTheme }) {
         gif_url: data.gif_url,
       };
       setMessages(prev => [...prev, botMessage]);
+      setUploadedImageUrl(null);
+      handleCancelImage();
       chatApi.getHistory().then(historyData => {
         if(historyData && historyData.sessions) setSessions(historyData.sessions);
       }).catch(e => {});
     } catch {
+      setUploadedImageUrl(null);
       setMessages(prev => [...prev, { role: 'assistant', content: "Désolé, une erreur est survenue." }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file || !file.type.startsWith('image/')) return;
     const previewUrl = URL.createObjectURL(file);
     setSelectedImage({ file, previewUrl });
-    // reset input so same file can be re-selected
+    setImageUploading(true);
     e.target.value = '';
+    try {
+      const res = await chatApi.uploadFile(file);
+      setUploadedImageUrl(res.url);
+    } catch {
+      setUploadedImageUrl(null);
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const handleCancelImage = () => {
     if (selectedImage) URL.revokeObjectURL(selectedImage.previewUrl);
     setSelectedImage(null);
+    setUploadedImageUrl(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user_id');
-    navigate('/auth');
-  };
-
-  return (
-    <div className="app-shell">
-      <aside className={`sidebar ${sidebarOpen ? 'open' : 'collapsed'}`}>
-        <div className="sidebar-header">
-          <Link to="/" className="logo logo-img-wrap">
-            <img src={logoImg} alt="ELITEFIT" className="logo-img" />
-            <span className="logo-text">ELITEFI<span>T</span></span>
-          </Link>
-          <button className="sidebar-close" onClick={toggleSidebar} aria-label={sidebarOpen ? 'Réduire le menu' : 'Développer le menu'}>
-            <i className={`ph ${sidebarOpen ? 'ph-caret-left' : 'ph-list'}`}></i>
-          </button>
-        </div>
-
-        <nav className="sidebar-nav">
-          <Link to="/chat" className="nav-item active"><span className="ni"><i className="ph ph-chat-circle-text"></i></span><span className="nav-text">Chat</span></Link>
-          <Link to="/dashboard" className="nav-item"><span className="ni"><i className="ph ph-chart-bar"></i></span><span className="nav-text">Dashboard</span></Link>
-          <Link to="/profile" className="nav-item"><span className="ni"><i className="ph ph-user"></i></span><span className="nav-text">Profil</span></Link>
-        </nav>
-
-        <div className="sidebar-section">
-          <div className="sidebar-label">SUJETS RAPIDES</div>
-          <div className="quick-chips">
-            <button onClick={() => handleSendMessage('Programme musculation cette semaine')}><i className="ph ph-calendar"></i><span className="chip-text">Programme semaine</span></button>
-            <button onClick={() => handleSendMessage('Calculer mes calories')}><i className="ph ph-fire"></i><span className="chip-text">Mes calories</span></button>
-            <button onClick={() => handleSendMessage('Exercices pour les biceps')}><i className="ph ph-barbell"></i><span className="chip-text">Biceps</span></button>
-          </div>
-        </div>
-
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <div className="user-avatar">{userEmail?.charAt(0).toUpperCase() || '?'}</div>
-            <div className="user-details">
-              <span>{userEmail || 'Chargement...'}</span>
-              <span className="user-plan">Plan Gratuit</span>
-            </div>
-          </div>
-          <button className="btn-logout" onClick={handleLogout}>
-            <i className="ph ph-sign-out"></i>
-            <span className="logout-text">Déconnexion</span>
-          </button>
-        </div>
-      </aside>
-
-      <div className={`sidebar-overlay ${sidebarOpen ? 'active' : ''}`} onClick={toggleSidebar}></div>
-
+  return (<>
       <aside className={`discussions-sidebar ${historyOpen ? 'open' : ''}`}>
         <div className="discussions-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-muted)' }}>Discussions</span>
@@ -198,13 +219,12 @@ export default function Chat({ theme, toggleTheme }) {
         </div>
         <div className="discussions-search">
           <i className="ph ph-magnifying-glass" style={{ color: 'var(--text-muted)' }}></i>
-          <input type="text" placeholder="Rechercher des conversations..." />
+          <input type="text" placeholder="Rechercher des conversations..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         </div>
         <div className="discussions-list">
-          {sessions.map(s => {
+          {(searchQuery.trim() ? filteredSessions : sessions).map(s => {
             const firstMsg = s.messages?.find(m => m.role === 'user');
             const title = s.title || (firstMsg ? firstMsg.content : 'Nouvelle discussion');
-            
             const updatedDate = new Date(s.updated_at);
             const now = new Date();
             const diffMs = now - updatedDate;
@@ -220,16 +240,43 @@ export default function Chat({ theme, toggleTheme }) {
             } else {
               dateStr = updatedDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
             }
-
             return (
-              <button 
-                className={`discussion-item ${sessionId === s._id ? 'active' : ''}`} 
-                key={s._id} 
-                onClick={() => { setSessionId(s._id); setMessages(s.messages || []); }}
+              <div
+                className={`discussion-item-wrap ${sessionId === s._id ? 'active' : ''}`}
+                key={s._id}
               >
-                <span className="discussion-title">{title}</span>
-                <span className="discussion-time">{dateStr}</span>
-              </button>
+                <button className="discussion-item" onClick={() => { setSessionId(s._id); setMessages(s.messages || []); }}>
+                  {renamingId === s._id ? (
+                    <input
+                      className="rename-input"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleRename(s._id); if (e.key === 'Escape') setRenamingId(null); }}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  ) : (
+                    <span className="discussion-title">{title}</span>
+                  )}
+                  <span className="discussion-time">{dateStr}</span>
+                </button>
+                <div className="discussion-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === s._id ? null : s._id); }}>
+                  <i className="ph ph-dots-three-vertical"></i>
+                </div>
+                {menuOpen === s._id && (
+                  <div className="discussion-menu" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => { setRenamingId(s._id); setRenameValue(title); setMenuOpen(null); }}>
+                      <i className="ph ph-pencil-line"></i> Rename
+                    </button>
+                    <button onClick={() => handleArchive(s._id)}>
+                      <i className="ph ph-archive"></i> Archive
+                    </button>
+                    <button className="danger" onClick={() => { setConfirmDelete(s._id); setMenuOpen(null); }}>
+                      <i className="ph ph-trash"></i> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -249,10 +296,6 @@ export default function Chat({ theme, toggleTheme }) {
           </div>
         </div>
 
-        {/* The history dropdown panel is removed because it is replaced by the secondary sidebar. */}
-
-        {/* Moved suggestions into welcome screen */}
-
         <div className="messages-area">
           {messages.length === 0 ? (
             <div className="welcome-screen">
@@ -260,7 +303,7 @@ export default function Chat({ theme, toggleTheme }) {
                 <img src={logoImg} alt="ELITEFIT" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
                 <span style={{ marginLeft: '10px' }}>ELITEFI<span style={{ color: 'var(--green)' }}>T</span></span>
               </div>
-              <h2>Comment puis-je t'aider aujourd'hui ?</h2>
+              <h2>{userName ? `${userName}, how can I help you today?` : 'Comment puis-je t\'aider aujourd\'hui ?'}</h2>
               <p>Pose ta question en français, darija, arabe ou anglais</p>
               <div className="welcome-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', maxWidth: '600px' }}>
                 <button onClick={() => handleSendMessage('Bonjour !')}><i className="ph ph-hand-waving"></i> Dire bonjour</button>
@@ -280,11 +323,11 @@ export default function Chat({ theme, toggleTheme }) {
                   <div className="msg-avatar">{m.role === 'user' ? (userEmail?.charAt(0).toUpperCase() || 'U') : 'AI'}</div>
                   <div className="msg-content">
                     <div className="msg-bubble">
-                      {m.image_preview && (
-                        <div className="msg-image-preview">
-                          <img src={m.image_preview} alt="uploaded" />
-                        </div>
-                      )}
+          {m.image_url && (
+            <div className="msg-image-preview">
+              <img src={m.image_url} alt="uploaded" />
+            </div>
+          )}
                       {m.role === 'assistant' ? (
                         <ReactMarkdown>{m.content}</ReactMarkdown>
                       ) : (
@@ -307,16 +350,10 @@ export default function Chat({ theme, toggleTheme }) {
 
         <div className="chat-input-wrap">
           <div className="chat-input-inner">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              style={{ display: 'none' }} 
-              accept="image/*"
-              onChange={handleFileSelect} 
-            />
-            <button className="upload-btn" onClick={() => fileInputRef.current.click()} title="Ajouter une image">
-              <i className="ph ph-image"></i>
-            </button>
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileSelect} />
+              <button className={`upload-btn ${imageUploading ? 'uploading' : ''}`} onClick={() => fileInputRef.current.click()} title="Ajouter une image" disabled={imageUploading}>
+                {imageUploading ? <span style={{ fontSize: '12px' }}>...</span> : <i className="ph ph-image"></i>}
+              </button>
             <div className="input-area-wrap">
               {selectedImage && (
                 <div className="input-image-chip">
@@ -328,19 +365,31 @@ export default function Chat({ theme, toggleTheme }) {
               )}
               <textarea
                 id="chat-input"
-                placeholder="Pose ta question..."
+                placeholder={`Ask ${userName || 'FitBot'}, how can I help you reach your goals today?`}
                 rows="1"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
               ></textarea>
             </div>
-            <button id="send-btn" className="send-btn" onClick={() => handleSendMessage()} disabled={loading || (!input.trim() && !selectedImage)}>
+            <button id="send-btn" className="send-btn" onClick={() => handleSendMessage()} disabled={loading || (!input.trim() && !uploadedImageUrl) || imageUploading}>
               <i className="ph ph-arrow-right"></i>
             </button>
           </div>
         </div>
       </main>
-    </div>
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal-content confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete conversation?</h3>
+            <p>This action cannot be undone.</p>
+            <div className="modal-footer">
+              <button className="btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button className="btn-primary danger" onClick={handleDeleteConfirm}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

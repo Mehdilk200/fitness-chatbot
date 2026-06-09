@@ -30,11 +30,11 @@ export const authApi = {
     });
     return handleResponse(res);
   },
-  register: async (email, password) => {
+  register: async (email, password, first_name = '', last_name = '') => {
     const res = await fetch(`${BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, first_name, last_name }),
     });
     return handleResponse(res);
   },
@@ -44,6 +44,11 @@ export const authApi = {
     });
     return handleResponse(res);
   }
+};
+
+const getUploadHeaders = () => {
+  const token = localStorage.getItem('token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
 };
 
 export const profileApi = {
@@ -60,15 +65,27 @@ export const profileApi = {
       body: JSON.stringify(data),
     });
     return handleResponse(res);
-  }
+  },
+  uploadAvatar: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${BASE_URL}/profile/avatar`, {
+      method: 'POST',
+      headers: getUploadHeaders(),
+      body: formData,
+    });
+    return handleResponse(res);
+  },
 };
 
 export const chatApi = {
-  sendMessage: async (message, sessionId = null) => {
+  sendMessage: async (message, sessionId = null, imageUrl = null) => {
+    const body = { message, session_id: sessionId };
+    if (imageUrl) body.image_url = imageUrl;
     const res = await fetch(`${BASE_URL}/chat`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ message, session_id: sessionId }),
+      body: JSON.stringify(body),
     });
     return handleResponse(res);
   },
@@ -94,6 +111,21 @@ export const chatApi = {
   deleteSession: async (sessionId) => {
     const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, {
       method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+  renameSession: async (sessionId, title) => {
+    const res = await fetch(`${BASE_URL}/chat/session/${sessionId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ title }),
+    });
+    return handleResponse(res);
+  },
+  archiveSession: async (sessionId) => {
+    const res = await fetch(`${BASE_URL}/chat/session/${sessionId}/archive`, {
+      method: 'PUT',
       headers: getHeaders(),
     });
     return handleResponse(res);
@@ -157,4 +189,41 @@ export const scheduleApi = {
     });
     return handleResponse(res);
   }
+};
+
+export const wearableApi = {
+  getConnectUrl: async (provider) => {
+    const res = await fetch(`${BASE_URL}/wearable/connect/${provider}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+  getStatus: async () => {
+    const res = await fetch(`${BASE_URL}/wearable/status`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+  getStats: async (days = 7, provider = null) => {
+    const params = new URLSearchParams({ days });
+    if (provider) params.set('provider', provider);
+    const res = await fetch(`${BASE_URL}/wearable/stats?${params}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+  disconnect: async (provider) => {
+    const res = await fetch(`${BASE_URL}/wearable/disconnect/${provider}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+  sync: async (provider) => {
+    const res = await fetch(`${BASE_URL}/wearable/sync/${provider}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
 };

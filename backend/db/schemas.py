@@ -78,11 +78,12 @@ class UserProfileUpdate(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    role:      str                               
+    role:      str
     content:   str
-    intent:    Optional[str]   = None            
+    intent:    Optional[str]   = None
     language:  Optional[str]   = None
-    service:   Optional[str]   = None            
+    service:   Optional[str]   = None
+    image_url: Optional[str]   = None
     timestamp: datetime        = Field(default_factory=datetime.utcnow)
 
 class ChatSession(BaseModel):
@@ -93,14 +94,16 @@ class ChatSession(BaseModel):
 
 class ChatRequest(BaseModel):
     message:    str
-    session_id: Optional[str] = None             
+    session_id: Optional[str] = None
+    image_url:  Optional[str] = None
 
 class ChatResponse(BaseModel):
     response:   str
     session_id: str
     intent:     str
     language:   str
-    gif_url:    Optional[str] = None             
+    gif_url:    Optional[str] = None
+    image_url:  Optional[str] = None
 
 class SupportRequest(BaseModel):
     """Lightweight request for the public guest/support chat endpoint."""
@@ -349,6 +352,7 @@ EXEMPLE DOCUMENT:
 """
 
 class ScheduleItem(BaseModel):
+    id:            str
     user_id:       str
     muscle_group:  str
     day:           str                            
@@ -379,3 +383,76 @@ class ScheduleUpdate(BaseModel):
     calories:      Optional[int] = None
     image_url:     Optional[str] = None
     notes:         Optional[str] = None
+
+
+"""
+COLLECTION: wearable_connections
+EXEMPLE DOCUMENT:
+{
+    "_id":             ObjectId("..."),
+    "user_id":         ObjectId("..."),
+    "provider":        "strava",       // "strava" | "fitbit"
+    "provider_user_id":"12345678",
+    "access_token":    "eyJ...",
+    "refresh_token":   "eyJ...",
+    "token_expires_at": 1700000000,     // unix timestamp
+    "connected":       True,
+    "last_sync":       ISODate("2025-01-15T10:30:00Z"),
+    "created_at":      ISODate("2025-01-10"),
+    "updated_at":      ISODate("2025-01-15T10:30:00Z")
+}
+"""
+
+class WearableConnection(BaseModel):
+    id:               Optional[str] = None
+    user_id:          str
+    provider:         str                        # "strava" | "fitbit"
+    provider_user_id: str = ""
+    access_token:     Optional[str] = None
+    refresh_token:    Optional[str] = None
+    token_expires_at: Optional[int] = None        # unix timestamp
+    connected:        bool = True
+    last_sync:        Optional[datetime] = None
+    created_at:       datetime = Field(default_factory=datetime.utcnow)
+    updated_at:       datetime = Field(default_factory=datetime.utcnow)
+
+"""
+COLLECTION: wearable_activity_logs
+EXEMPLE DOCUMENT:
+{
+    "_id":               ObjectId("..."),
+    "user_id":           ObjectId("..."),
+    "provider":          "strava",
+    "provider_activity_id": "1234567890",
+    "date":              "2025-01-15",
+    "type":              "run",              // "run" | "ride" | "walk" | "swim" | "workout" | "other"
+    "name":              "Morning Run",
+    "steps":             10500,
+    "calories":          450,
+    "distance_km":       8.2,
+    "duration_minutes":  75,
+    "heart_rate_avg":    140,
+    "heart_rate_peak":   160,
+    "elevation_gain":    120.5,
+    "raw_data":          {},                  // original provider payload
+    "created_at":        ISODate("2025-01-15T12:00:00Z")
+}
+"""
+
+class WearableActivityLog(BaseModel):
+    id:                  Optional[str] = None
+    user_id:             str
+    provider:            str
+    provider_activity_id: str = ""
+    date:                str = ""
+    type:                str = "other"         # run / ride / walk / swim / workout / other
+    name:                str = ""
+    steps:               int = 0
+    calories:            int = 0
+    distance_km:         float = 0.0
+    duration_minutes:    int = 0
+    heart_rate_avg:      int = 0
+    heart_rate_peak:     int = 0
+    elevation_gain:      float = 0.0
+    raw_data:            Optional[dict] = None
+    created_at:          datetime = Field(default_factory=datetime.utcnow)

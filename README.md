@@ -71,7 +71,8 @@ fitness-chatbot/
 │   │   ├── intent_router.py    #   Classification d'intention (multi-langue)
 │   │   ├── calculator_service.py  # Calculs BMR/TDEE/Macros
 │   │   ├── plan_generator.py   #   Génération programme 7 jours
-│   │   ├── progress_service.py #   Analyse de progression
+│   │   └── progress_service.py #   Analyse de progression
+│   ├── scripts/                 # Scripts d'initialisation (exécution manuelle)
 │   │   ├── import_exercises.py #   Import des exercices (GIF → MongoDB)
 │   │   └── populate_chroma.py  #   Peuplement ChromaDB depuis MongoDB
 │   ├── models/
@@ -152,7 +153,7 @@ La documentation interactive Swagger est sur **http://localhost:8001/docs**.
 
 ```bash
 cd backend
-python services/import_exercises.py
+python scripts/import_exercises.py
 # Importe les GIFs et métadonnées d'exercices dans MongoDB
 ```
 
@@ -160,7 +161,7 @@ python services/import_exercises.py
 
 ```bash
 cd backend
-python services/populate_chroma.py
+python scripts/populate_chroma.py
 # Crée l'index vectoriel pour la recherche RAG depuis MongoDB
 ```
 
@@ -208,8 +209,8 @@ docker-compose up -d --build
 
 > ⚠️ Après le premier lancement, il faut importer les exercices et peupler ChromaDB dans le conteneur backend :
 > ```bash
-> docker exec -it fitness-chatbot-backend-1 python services/import_exercises.py
-> docker exec -it fitness-chatbot-backend-1 python services/populate_chroma.py
+> docker exec -it fitness-chatbot-backend-1 python scripts/import_exercises.py
+> docker exec -it fitness-chatbot-backend-1 python scripts/populate_chroma.py
 > ```
 
 ---

@@ -12,6 +12,7 @@
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
     "chart.js": "^4.5.1",
+    "fuse.js": "^7.4.2",
     "mapbox-gl": "^3.23.1",
     "react": "^19.2.6",
     "react-chartjs-2": "^5.3.1",

@@ -7,6 +7,8 @@ import Chat from './pages/Chat';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
+import { SidebarProvider } from './contexts/SidebarContext';
+import AppLayout from './components/AppLayout';
 
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -21,16 +23,20 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/auth" element={<Auth theme={theme} toggleTheme={toggleTheme} />} />
-        <Route path="/onboarding" element={<ProtectedRoute requireProfile={false}><Onboarding theme={theme} toggleTheme={toggleTheme} /></ProtectedRoute>} />
-        <Route path="/chat" element={<ProtectedRoute><Chat theme={theme} toggleTheme={toggleTheme} /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard theme={theme} toggleTheme={toggleTheme} /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile theme={theme} toggleTheme={toggleTheme} /></ProtectedRoute>} />
-      </Routes>
-    </Router>
+    <SidebarProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<ProtectedRoute requireProfile={false}><Onboarding theme={theme} toggleTheme={toggleTheme} /></ProtectedRoute>} />
+          <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route path="/chat" element={<Chat theme={theme} toggleTheme={toggleTheme} />} />
+            <Route path="/dashboard" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
+            <Route path="/profile" element={<Profile theme={theme} toggleTheme={toggleTheme} />} />
+          </Route>
+        </Routes>
+      </Router>
+    </SidebarProvider>
   );
 }
 

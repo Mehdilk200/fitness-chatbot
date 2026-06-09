@@ -30,12 +30,13 @@ export default function Onboarding({ theme, toggleTheme }) {
     } else {
       setLoading(true);
       try {
-        await profileApi.updateProfile({
+        const payload = {
           ...formData,
-          age: parseInt(formData.age),
-          weight_kg: parseFloat(formData.weight_kg),
-          height_cm: parseFloat(formData.height_cm)
-        });
+          age: parseInt(formData.age) || 0,
+          weight_kg: parseFloat(formData.weight_kg) || 0,
+          height_cm: parseFloat(formData.height_cm) || 0,
+        };
+        await profileApi.updateProfile(payload);
         localStorage.setItem('is_profile_complete', 'true');
         navigate('/dashboard');
       } catch (err) {

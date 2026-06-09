@@ -1,317 +1,232 @@
-# FitBot — Fitness AI Chatbot
+# 🏋️ EliteFiT — AI Fitness Coach
 
-Un **chatbot fitness intelligent** avec suivi de progression, génération de programmes d'entraînement, calculs métaboliques et recommandations d'exercices via **RAG (Retrieval-Augmented Generation)** + **LLM (Gemini)**.
+**EliteFiT** is a full-stack AI-powered fitness coaching platform that combines an intelligent multilingual chatbot, personalized workout planning, metabolic calculations, and a rich exercise database with RAG (Retrieval-Augmented Generation).
 
-Le chatbot multilingue (Français, Anglais, Arabe, Darija) comprend l'intention de l'utilisateur et répond avec des données précises issues de la base d'exercices locale, enrichies par l'IA générative.
-
----
-
-## ✨ Fonctionnalités
-
-- **💬 Chatbot IA multilingue** — Coach virtuel boosté par Gemini, avec compréhension d'intention (musculation, nutrition, planning, cardio, progrès...)
-- **📚 RAG (Recherche vectorielle)** — L'IA consulte une base locale de 1000+ exercices via ChromaDB pour des réponses précises
-- **📊 Dashboard interactif** — Graphiques d'évolution du poids, mensurations et sessions passées (Chart.js)
-- **📝 Profil & Métabolisme** — Calcul automatique du BMR, TDEE, macros (Protéines/Glucides/Lipides) selon l'objectif
-- **📅 Planning 7 jours** — Génération automatique de programmes d'entraînement personnalisés
-- **🏋️ Base d'exercices** — Animations GIF, ciblage musculaire, équipement requis
-- **🔐 Authentification JWT** — Inscription/Connexion sécurisée avec tokens
+The chatbot understands user intent across multiple languages (English, French, Arabic, Darija) and responds with accurate, context-aware fitness advice powered by Google Gemini LLM and a vector-searchable exercise library.
 
 ---
 
-## 🛠️ Technologies
+## ✨ Features
+
+- **💬 AI Chatbot (Multilingual)** — Virtual fitness coach powered by Google Gemini, with intent recognition for training, nutrition, planning, cardio, progress tracking, and more
+- **📚 RAG (Vector Search)** — The AI queries a local database of 1000+ exercises via ChromaDB for precise, evidence-based answers
+- **📊 Interactive Dashboard** — Visual progress tracking with charts for weight, body measurements, and past sessions (Chart.js)
+- **📝 Profile & Metabolism Calculator** — Automatic BMR, TDEE, and macronutrient (Protein/Carbs/Fats) calculations based on your goals
+- **📅 7-Day Smart Planner** — Auto-generated personalized workout schedules
+- **🏋️ Exercise Library** — GIF demonstrations, muscle targeting, equipment requirements
+- **🔐 JWT Authentication** — Secure sign-up/login with token-based sessions
+- **⌨️ Sidebar Persistence** — Sidebar state (open/closed) saved to localStorage
+- **🔗 Wearable Integration** — Connect Fitbit, Strava, Apple Watch, and other devices
+- **🎨 Dark/Light Theme** — Toggle between elegant light and dark modes
+
+---
+
+## 🛠️ Tech Stack
 
 ### Frontend (React + Vite)
-| Technologie | Utilisation |
+
+| Technology | Purpose |
 |---|---|
-| React 19 | UI dynamique |
-| Vite 8 | Build & dev ultra-rapide |
-| React Router DOM 7 | Navigation SPA |
-| Chart.js + react-chartjs-2 | Graphiques dashboard |
-| React Markdown | Rendu des réponses formatées du LLM |
-| Phosphor Icons | Iconographie |
-| Mapbox GL | Cartes (optionnel) |
+| **React 19** | Dynamic UI components |
+| **Vite 8** | Ultra-fast build & development |
+| **React Router DOM 7** | SPA navigation & routing |
+| **Chart.js + react-chartjs-2** | Dashboard charts and graphs |
+| **React Markdown** | Rendered LLM responses |
+| **Phosphor Icons** | Iconography throughout the app |
+| **Mapbox GL** | Interactive location maps |
 
 ### Backend (FastAPI + Python)
-| Technologie | Utilisation |
+
+| Technology | Purpose |
 |---|---|
-| FastAPI | API REST asynchrone |
-| Uvicorn | Serveur ASGI |
-| Motor + PyMongo | Driver MongoDB asynchrone |
-| Google Generative AI (Gemini) | LLM pour le chatbot |
-| ChromaDB | Base vectorielle pour le RAG |
-| Pydantic | Validation des données |
-| python-jose + passlib | JWT + hachage bcrypt |
-| pytest | Tests unitaires |
+| **FastAPI** | Async REST API framework |
+| **Uvicorn** | ASGI server |
+| **Motor + PyMongo** | Async MongoDB driver |
+| **Google Generative AI (Gemini)** | LLM for the chatbot |
+| **ChromaDB** | Vector database for RAG |
+| **Pydantic** | Data validation & schemas |
+| **python-jose + passlib** | JWT tokens + bcrypt hashing |
+| **pytest** | Unit & integration testing |
 
-### Base de données
-- **MongoDB** — Profils utilisateurs, historique des conversations, plannings, logs de progression
-- **ChromaDB** — Index vectoriel des exercices pour la recherche sémantique
+### Database
 
----
-
-## 📁 Structure du projet
-
-```
-fitness-chatbot/
-├── backend/
-│   ├── main.py                 # Point d'entrée FastAPI
-│   ├── requirements.txt        # Dépendances Python
-│   ├── Dockerfile              # Build Docker standalone (Render)
-│   ├── .envEXMPLE              # Variables d'environnement (copier → .env)
-│   ├── routes/                 # Endpoints API
-│   │   ├── auth.py             #   /api/auth (register, login, me)
-│   │   ├── chat.py             #   /api/chat (messages, upload, history)
-│   │   ├── profile.py          #   /api/profile (get/update)
-│   │   ├── schedule.py         #   /api/schedule (CRUD planning)
-│   │   ├── exercises.py        #   /api/exercises (search)
-│   │   └── crud.py             #   Opérations MongoDB communes
-│   ├── services/               # Logique métier
-│   │   ├── llm_service.py      #   Interface Gemini API
-│   │   ├── rag_services.py     #   Recherche vectorielle ChromaDB
-│   │   ├── intent_router.py    #   Classification d'intention (multi-langue)
-│   │   ├── calculator_service.py  # Calculs BMR/TDEE/Macros
-│   │   ├── plan_generator.py   #   Génération programme 7 jours
-│   │   └── progress_service.py #   Analyse de progression
-│   ├── scripts/                 # Scripts d'initialisation (exécution manuelle)
-│   │   ├── import_exercises.py #   Import des exercices (GIF → MongoDB)
-│   │   └── populate_chroma.py  #   Peuplement ChromaDB depuis MongoDB
-│   ├── models/
-│   │   └── schemas.py          # Schémas Pydantic (Register, Login, Token...)
-│   ├── db/
-│   │   ├── mongodb.py          # Connexion MongoDB + index
-│   │   ├── chroma.py           # Client ChromaDB persistant
-│   │   └── schemas.py          # Schémas Pydantic (Chat, Profile, Exercise...)
-│   ├── data/                   # Données RAG
-│   │   ├── equipments.json
-│   │   ├── muscles.json
-│   │   ├── bodyParts.json
-│   │   └── gifts/              # GIFs d'exercices
-│   └── test/                   # Tests
-│       ├── test_api.py
-│       ├── test_db.py
-│       ├── test_intent_router.py
-│       └── create_admin.py
-│
-├── interface/                  # Frontend React
-│   ├── src/
-│   │   ├── App.jsx            # Routes principales
-│   │   ├── pages/             # Pages : Home, Chat, Dashboard, Profile, Auth, Onboarding
-│   │   ├── components/        # Composants : ScheduleView, ThemeToggle, MapboxMap, ProtectedRoute
-│   │   └── services/api.js    # Client API (auth, chat, profile, schedule, exercises)
-│   ├── package.json
-│   ├── vite.config.js         # Proxy /api → backend:8001
-│   └── .envEXMPLE
-│
-├── docker/
-│   ├── backend/Dockerfile     # Docker image backend
-│   ├── frontend/Dockerfile    # Docker image frontend (Nginx)
-│   └── .env                   # Variables d'environnement Docker
-├── docker-compose.yml         # Orchestration complète (MongoDB + Backend + Frontend)
-└── README.md
-```
+- **MongoDB** — User profiles, chat history, workout schedules, progress logs
+- **ChromaDB** — Vector index of exercises for semantic search
 
 ---
 
-## 🚀 Démarrage rapide (Développement)
+## 🔄 Recent Updates
 
-### ✅ Prérequis
+### Branding Update (Logo Implementation)
+- Replaced the text-based 'A' logo placeholder in both the **Navbar** and **Footer** with the actual `logoelet.png` image
+- Logo is resized appropriately: 32×32px in the navbar, 28×28px in the footer
+- Favicon updated to use `/logoelet.png` for browser tab branding
+
+### Navigation & Footer Improvements
+- Added **social media icons** (Instagram, Facebook, Twitter) to the footer using the Phosphor Icons library
+- Social icons feature hover effects with the brand's signature lime green color
+- Footer logo now matches the navbar branding for visual consistency
+
+### Sidebar Persistence (localStorage)
+- Sidebar open/closed state is saved to `localStorage` under the key `sidebarOpen`
+- State persists across page refreshes and browser sessions
+- Implemented using React's `useState` with a lazy initializer reading from `localStorage`
+
+### Other Improvements
+- Fully responsive design with mobile drawer navigation
+- Dark/light theme toggle with `localStorage` persistence
+- Docker Compose setup for easy deployment
+
+---
+
+## 🚀 Setup Instructions
+
+### Prerequisites
 
 - **Python 3.10+**
 - **Node.js 18+**
-- **MongoDB** (local ou [MongoDB Atlas](https://www.mongodb.com/atlas))
-- **Clé API Gemini** (gratuite via [Google AI Studio](https://aistudio.google.com/))
+- **MongoDB** (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
+- **Gemini API Key** (free via [Google AI Studio](https://aistudio.google.com/))
 
-### 1️⃣ Backend
+### 1. Clone the Repository
 
 ```bash
-# 1. Aller dans le dossier backend
+git clone https://github.com/yourusername/fitness-chatbot.git
+cd fitness-chatbot
+```
+
+### 2. Backend Setup
+
+```bash
+# Navigate to backend
 cd backend
 
-# 2. Créer et activer l'environnement virtuel
+# Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate   # Linux/Mac
+source venv/bin/activate  # Linux/Mac
 # .\venv\Scripts\activate  # Windows
 
-# 3. Installer les dépendances
+# Install dependencies
 pip install -r requirements.txt
 
-# 4. Configurer les variables d'environnement
+# Configure environment variables
 cp .envEXMPLE .env
-# Éditer .env :
-#   - MONGO_URL : mongodb://localhost:27017 (local) ou votre URI Atlas
-#   - GEMINI_API_KEY : votre clé Google AI
-#   - JWT_SECRET : une chaîne aléatoire sécurisée
+# Edit .env with:
+#   - MONGO_URL: your MongoDB URI
+#   - GEMINI_API_KEY: your Google AI key
+#   - JWT_SECRET: a secure random string
 
-# 5. Lancer le serveur
+# Start the server
 uvicorn main:app --reload --port 8001
 ```
 
-Le backend est accessible sur **http://localhost:8001**.
-La documentation interactive Swagger est sur **http://localhost:8001/docs**.
+The backend runs at **http://localhost:8001** with interactive Swagger docs at **http://localhost:8001/docs**.
 
-### 2️⃣ Importer les exercices (obligatoire)
+### 3. Import Exercise Data
 
 ```bash
 cd backend
 python scripts/import_exercises.py
-# Importe les GIFs et métadonnées d'exercices dans MongoDB
-```
-
-### 3️⃣ Peupler ChromaDB (recommandé)
-
-```bash
-cd backend
 python scripts/populate_chroma.py
-# Crée l'index vectoriel pour la recherche RAG depuis MongoDB
 ```
 
-### 4️⃣ Frontend
+### 4. Frontend Setup
 
 ```bash
-# 1. Aller dans le dossier interface
+# Navigate to frontend
 cd interface
 
-# 2. Installer les dépendances
+# Install dependencies
 npm install
 
-# 3. Configurer les variables d'environnement
+# Configure environment
 cp .envEXMPLE .env
-# Éditer .env :
-#   - VITE_API_BASE_URL : http://localhost:8001/api
+# Edit .env with:
+#   - VITE_API_BASE_URL: http://localhost:8001/api
 
-# 4. Lancer le serveur de développement
+# Start dev server
 npm run dev
 ```
 
-Le frontend est accessible sur **http://localhost:5173**.
-Le proxy Vite redirige `/api`, `/uploads` et `/gifs` vers le backend.
+The frontend runs at **http://localhost:5173**. The Vite proxy redirects `/api`, `/uploads`, and `/gifs` to the backend.
 
----
-
-## 🐳 Démarrage avec Docker Compose
+### 5. Docker Deployment (Alternative)
 
 ```bash
-# 1. Configurer les variables d'environnement Docker
-# Éditer docker/.env avec votre GEMINI_API_KEY et MONGO_URL
-
-# 2. Lancer tous les services
+# Edit docker/.env with your API keys
 docker-compose up -d --build
-
-# 3. Accéder à l'application
-# Frontend : http://localhost:8080
-# Backend   : http://localhost:8001
 ```
 
-**Services démarrés :**
-- **mongo** — Base de données MongoDB (port 27017)
-- **backend** — API FastAPI (port 8001)
-- **frontend** — Nginx servant le build React (port 8080)
-
-> ⚠️ Après le premier lancement, il faut importer les exercices et peupler ChromaDB dans le conteneur backend :
-> ```bash
-> docker exec -it fitness-chatbot-backend-1 python scripts/import_exercises.py
-> docker exec -it fitness-chatbot-backend-1 python scripts/populate_chroma.py
-> ```
+- Frontend: **http://localhost:8080**
+- Backend: **http://localhost:8001**
 
 ---
 
-## 🌐 API Endpoints
-
-| Méthode | Endpoint | Auth | Description |
-|---|---|---|---|
-| **POST** | `/api/auth/register` | ❌ | Inscription (email + password) |
-| **POST** | `/api/auth/login` | ❌ | Connexion → retourne JWT |
-| **GET** | `/api/auth/me` | ✅ | Infos utilisateur courant |
-| **POST** | `/api/chat` | ✅ | Envoyer un message au chatbot |
-| **POST** | `/api/chat/upload` | ✅ | Uploader un fichier |
-| **GET** | `/api/chat/history` | ✅ | Historique des sessions |
-| **DELETE** | `/api/chat/session/{id}` | ✅ | Supprimer une session |
-| **GET** | `/api/profile/me` | ✅ | Profil utilisateur |
-| **POST** | `/api/profile/update` | ✅ | Créer/Mettre à jour le profil |
-| **GET** | `/api/exercises/search` | ❌ | Rechercher des exercices |
-| **GET** | `/api/schedule/` | ✅ | Planning de l'utilisateur |
-| **POST** | `/api/schedule/` | ✅ | Ajouter un élément au planning |
-| **PUT** | `/api/schedule/{id}` | ✅ | Modifier un élément |
-| **DELETE** | `/api/schedule/{id}` | ✅ | Supprimer un élément |
-| **GET** | `/health` | ❌ | Healthcheck |
-
----
-
-## 🔐 Variables d'environnement
-
-### Backend (`backend/.env`)
-
-| Variable | Description | Défaut |
-|---|---|---|
-| `MONGO_URL` | URI MongoDB | `mongodb://localhost:27017` |
-| `DB_NAME` | Nom de la base | `fitness_chatbot` |
-| `GEMINI_API_KEY` | Clé API Google Gemini | — |
-| `LLM_PROVIDER` | Fournisseur LLM | `gemini` |
-| `LLM_MODEL` | Modèle Gemini | `gemini-3.1-flash-lite` |
-| `JWT_SECRET` | Secret pour signer les tokens JWT | — |
-| `JWT_ALGORITHM` | Algorithme JWT | `HS256` |
-| `JWT_EXPIRE_MINUTES` | Durée de validité du token | `10080` (7 jours) |
-| `APP_PORT` | Port du serveur | `8001` |
-| `DEBUG` | Mode debug | `True` |
-| `CHROMA_ENABLED` | Activer ChromaDB | `true` |
-
-### Frontend (`interface/.env`)
-
-| Variable | Description | Défaut |
-|---|---|---|
-| `VITE_API_BASE_URL` | URL de base de l'API | `/api` |
-| `VITE_GOOGLE_MAPS_API_KEY` | Clé Google Maps (optionnel) | — |
-| `VITE_BOXMAP` | Token Mapbox (optionnel) | — |
-
----
-
-## 🧪 Tests
+## 🧪 Running Tests
 
 ```bash
 cd backend
-
-# Lancer les tests
 pytest test/
-
-# Tester l'intent router
-pytest test/test_intent_router.py -v
-
-# Tester l'API
-pytest test/test_api.py -v
-
-# Tester la base de données
-pytest test/test_db.py -v
 ```
 
 ---
 
-## 📦 Déploiement
+## 🔐 Environment Variables (Security)
 
-Le projet peut être déployé sur **Railway**, **Render** ou toute plateforme supportant Docker.
+Never commit real API keys to Git. Use `.env.example` files as templates:
 
-### Render
+### Backend (`backend/.env`)
+| Variable | Description |
+|---|---|
+| `MONGO_URL` | MongoDB connection URI |
+| `GEMINI_API_KEY` | Google Gemini API key |
+| `JWT_SECRET` | Secret for signing JWT tokens |
+| `STRAVA_CLIENT_ID` | Strava OAuth client ID |
+| `FITBIT_CLIENT_ID` | Fitbit OAuth client ID |
 
-Le backend inclut un `Dockerfile` optimisé (multi-stage) qui sert également le frontend build :
-```bash
-# Builder le frontend d'abord
-cd interface && npm run build
+### Frontend (`interface/.env`)
+| Variable | Description |
+|---|---|
+| `VITE_API_BASE_URL` | Backend API URL |
+| `VITE_BOXMAP` | Mapbox access token |
 
-# Le backend Dockerfile copie interface/dist/ automatiquement
-cd .. && docker build -f backend/Dockerfile -t fitbot .
+> **Best Practice:** Always add `.env` files to `.gitignore` before pushing. The `.env.example` files serve as templates showing which variables are needed without exposing real secrets.
+
+---
+
+## 📁 Project Structure
+
+```
+fitness-chatbot/
+├── backend/           # FastAPI Python backend
+│   ├── routes/        # API endpoints
+│   ├── services/      # Business logic
+│   ├── models/        # Pydantic schemas
+│   ├── db/            # Database connections
+│   ├── data/          # Exercise data & assets
+│   └── scripts/       # Initialization scripts
+├── interface/         # React + Vite frontend
+│   ├── src/
+│   │   ├── pages/     # Page components
+│   │   ├── components/ # Reusable components
+│   │   └── services/  # API client
+│   └── package.json
+├── docker/            # Docker configuration
+└── docker-compose.yml # Full orchestration
 ```
 
 ---
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-1. Forkez le dépôt
-2. Créez une branche : `git checkout -b feature/ma-feature`
-3. Commitez : `git commit -m 'Ajout de ma feature'`
-4. Poussez : `git push origin feature/ma-feature`
-5. Ouvrez une Pull Request
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit your changes: `git commit -m 'Add my feature'`
+4. Push: `git push origin feature/my-feature`
+5. Open a Pull Request
 
 ---
 
-## 📄 Licence
+## 📄 License
 
-Voir le fichier [LICENSE](LICENSE).
+See the [LICENSE](LICENSE) file for details.

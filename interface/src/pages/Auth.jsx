@@ -71,9 +71,8 @@ export default function Auth() {
 
   return (
     <div className="auth-page">
-      <div className="auth-layout">
-        <div className="auth-card">
-          <div className="auth-brand">
+      <div className="auth-wrapper">
+        <div className="auth-brand">
             <Link to="/" className="auth-logo">ELITEFI<span>T</span></Link>
             <div className="auth-bg-text">FIT</div>
             <div className="auth-quote">
@@ -161,6 +160,5 @@ export default function Auth() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

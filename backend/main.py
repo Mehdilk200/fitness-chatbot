@@ -56,6 +56,7 @@ app.add_middleware(
     allow_origins=[
         "*",
         "null","http://localhost:5173",
+        "https://elitefitbot.netlify.app"
         "https://fitness-chatbot-production.up.railway.app",
         "http://localhost:2332",
         "http://127.0.0.1:2332",

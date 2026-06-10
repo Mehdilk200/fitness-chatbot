@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from models.schemas import RegisterRequest, LoginRequest, TokenResponse
 from routes.crud import create_user, get_user_by_email, get_user_by_id, get_profile
 
@@ -14,17 +14,13 @@ JWT_SECRET  = os.getenv("JWT_SECRET",  "change_me_please_32_chars_minimum")
 JWT_ALGO    = os.getenv("JWT_ALGORITHM","HS256")
 JWT_EXPIRE  = int(os.getenv("JWT_EXPIRE_MINUTES", 10080))   
 
-pwd_ctx  = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
-
-
 def hash_password(plain: str) -> str:
-    return pwd_ctx.hash(plain)
-
+    return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_ctx.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def create_token(user_id: str) -> str:

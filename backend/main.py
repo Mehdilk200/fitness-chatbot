@@ -51,20 +51,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+origins = [
+    "https://elitefitbot.netlify.app",
+    "http://localhost:5173",
+    "http://localhost:2332",
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8000"
+
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*",
-        "null","http://localhost:5173",
-        "https://elitefitbot.netlify.app"
-        "https://fitness-chatbot-production.up.railway.app",
-        "http://localhost:2332",
-        "http://127.0.0.1:2332",
-        "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        
-    ],
-    allow_credentials=False,
+    allow_origins=origins, 
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

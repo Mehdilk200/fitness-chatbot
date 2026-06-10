@@ -79,9 +79,9 @@ export const profileApi = {
 };
 
 export const chatApi = {
-  sendMessage: async (message, sessionId = null, imageUrl = null) => {
+  sendMessage: async (message, sessionId = null, imageUrls = null) => {
     const body = { message, session_id: sessionId };
-    if (imageUrl) body.image_url = imageUrl;
+    if (imageUrls && imageUrls.length > 0) body.image_urls = imageUrls;
     const res = await fetch(`${BASE_URL}/chat`, {
       method: 'POST',
       headers: getHeaders(),
@@ -127,6 +127,18 @@ export const chatApi = {
     const res = await fetch(`${BASE_URL}/chat/session/${sessionId}/archive`, {
       method: 'PUT',
       headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+  getGreeting: async () => {
+    const res = await fetch(`${BASE_URL}/chat/greeting`, { headers: getHeaders() });
+    return handleResponse(res);
+  },
+  deleteFile: async (url) => {
+    const res = await fetch(`${BASE_URL}/chat/file`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+      body: JSON.stringify({ url }),
     });
     return handleResponse(res);
   }

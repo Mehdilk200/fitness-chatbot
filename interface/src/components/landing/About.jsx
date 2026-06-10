@@ -1,11 +1,15 @@
+import { useTranslation } from 'react-i18next';
+
 export default function About() {
+  const { t } = useTranslation('landing');
+
   return (
     <section id="about" className="landing-section">
       <div className="about-left">
-        <div className="section-label">About Us</div>
-        <h2>We Don't Just Build Bodies, We Build Strong Men Who Lead with Power and Confidence</h2>
-        <p>At Fitne, we believe every man has the power to transform himself — physically, mentally, and confidently. Our mission is simple: to help them rediscover and unlock the strength that's already inside them.</p>
-        <button className="hero-btn">Start Your Transformation</button>
+        <div className="section-label">{t('about.label')}</div>
+        <h2>{t('about.title')}</h2>
+        <p>{t('about.description')}</p>
+        <button className="hero-btn">{t('about.cta')}</button>
       </div>
       <div className="about-imgs">
         <div className="about-img-main">

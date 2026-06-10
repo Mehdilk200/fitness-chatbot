@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -19,17 +20,26 @@ ChartJS.register(
 );
 
 export default function Stats() {
+  const { t } = useTranslation('landing');
+
   return (
     <section id="stats" className="landing-section">
       <div className="radar-wrap">
-        <div className="section-label">Where Power Is Built</div>
+        <div className="section-label">{t('stats.label')}</div>
         <div style={{ maxWidth: '400px', margin: '0 auto' }}>
           <Radar 
             data={{
-              labels: ['UNSTOPPABLE', 'STRONGER', 'FOCUSED', 'LIMITLESS', 'RELENTLESS', 'POWERFUL'],
+              labels: [
+                t('stats.radarUnstoppable'),
+                t('stats.radarStronger'),
+                t('stats.radarFocused'),
+                t('stats.radarLimitless'),
+                t('stats.radarRelentless'),
+                t('stats.radarPowerful'),
+              ],
               datasets: [
                 {
-                  label: 'Elite Performance',
+                  label: t('stats.radarLabel'),
                   data: [85, 95, 75, 90, 80, 88],
                   backgroundColor: 'rgba(200, 241, 53, 0.15)',
                   borderColor: '#c8f135',
@@ -60,15 +70,15 @@ export default function Stats() {
         </div>
       </div>
       <div>
-        <h2 className="section-title">Transform Your Body, Elevate Your Mind,<br />and Unlock the Strongest Version of Yourself</h2>
+        <h2 className="section-title">{t('stats.title')}</h2>
         <div className="stats-grid">
-          <div className="stat-box"><div className="num">1,200<span>+</span></div><div className="lbl">Men Transformed</div></div>
-          <div className="stat-box"><div className="num">10<span>+</span></div><div className="lbl">Years of Expert</div></div>
-          <div className="stat-box"><div className="num">35<span>%</span></div><div className="lbl">Faster Results</div></div>
-          <div className="stat-box"><div className="num">300<span>+</span></div><div className="lbl">Workout Plans</div></div>
+          <div className="stat-box"><div className="num">1,200<span>+</span></div><div className="lbl">{t('stats.statMen')}</div></div>
+          <div className="stat-box"><div className="num">10<span>+</span></div><div className="lbl">{t('stats.statYears')}</div></div>
+          <div className="stat-box"><div className="num">35<span>%</span></div><div className="lbl">{t('stats.statFaster')}</div></div>
+          <div className="stat-box"><div className="num">300<span>+</span></div><div className="lbl">{t('stats.statPlans')}</div></div>
         </div>
-        <p className="stats-desc" style={{ marginTop: "32px" }}>We're not just a gym. We're a brotherhood of men pushing limits, breaking barriers, and proving that hard work always pays off. From personalised training plans to high-energy group sessions, everything we do is built to challenge you, motivate you, and keep you winning.</p>
-        <button className="hero-btn">Start Your Transformation</button>
+        <p className="stats-desc" style={{ marginTop: "32px" }}>{t('stats.description')}</p>
+        <button className="hero-btn">{t('stats.cta')}</button>
       </div>
     </section>
   );

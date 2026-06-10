@@ -83,7 +83,7 @@ class ChatMessage(BaseModel):
     intent:    Optional[str]   = None
     language:  Optional[str]   = None
     service:   Optional[str]   = None
-    image_url: Optional[str]   = None
+    image_urls: Optional[List[str]] = None
     timestamp: datetime        = Field(default_factory=datetime.utcnow)
 
 class ChatSession(BaseModel):
@@ -95,7 +95,7 @@ class ChatSession(BaseModel):
 class ChatRequest(BaseModel):
     message:    str
     session_id: Optional[str] = None
-    image_url:  Optional[str] = None
+    image_urls: Optional[List[str]] = None
 
 class ChatResponse(BaseModel):
     response:   str
@@ -103,7 +103,10 @@ class ChatResponse(BaseModel):
     intent:     str
     language:   str
     gif_url:    Optional[str] = None
-    image_url:  Optional[str] = None
+    image_urls: Optional[List[str]] = None
+
+class GreetingResponse(BaseModel):
+    greeting: str
 
 class SupportRequest(BaseModel):
     """Lightweight request for the public guest/support chat endpoint."""

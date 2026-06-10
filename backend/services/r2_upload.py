@@ -48,3 +48,14 @@ async def upload_to_r2(file_bytes: bytes, filename: str, content_type: Optional[
     except Exception as e:
         print(f"R2 upload failed: {e}")
         return None
+
+async def delete_from_r2(key: str) -> bool:
+    r2 = get_r2_client()
+    if not r2:
+        return False
+    try:
+        r2.delete_object(Bucket=R2_BUCKET_NAME, Key=key)
+        return True
+    except Exception as e:
+        print(f"R2 delete failed: {e}")
+        return False

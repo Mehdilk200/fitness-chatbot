@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import imgT1 from "../../assets/ts-01.png";
 import imgT2 from "../../assets/ts-02.png";
 import imgT3 from "../../assets/ts-03.png";
@@ -7,6 +8,7 @@ import imgT5 from "../../assets/ts-05.png";
 import imgT6 from "../../assets/ts-06.png";
 
 export default function TransformationStories() {
+  const { t } = useTranslation('landing');
   const [tsIndex, setTsIndex] = useState(0);
   const tsTrackRef = useRef(null);
 
@@ -33,11 +35,11 @@ export default function TransformationStories() {
   return (
     <section id="transformation-stories" className="landing-section">
       <div className="ts-left">
-        <div className="ts-tag"><span className="ts-tag-dot"></span> Transformation Stories</div>
-        <h2>Real Journeys.<br />Real Change</h2>
-        <p>Every transformation is different — but the foundation is the same: consistency, structure, and the right guidance.</p>
+        <div className="ts-tag"><span className="ts-tag-dot"></span> {t('transformationStories.tag')}</div>
+        <h2>{t('transformationStories.title')}</h2>
+        <p>{t('transformationStories.description')}</p>
         <button className="ts-view-btn">
-          View All Stories
+          {t('transformationStories.cta')}
           <span className="ts-arrow"><i className="ph ph-arrow-right"></i></span>
         </button>
       </div>
@@ -46,8 +48,8 @@ export default function TransformationStories() {
           <div className="ts-cards-track" ref={tsTrackRef} style={{ transform: getTsTransform() }}>
             <div className="ts-card">
               <div className="ts-card-header">
-                <div className="ts-card-result">12kg in 10 weeks</div>
-                <div className="ts-card-desc">With structured training and accountability, he built habits that led to lasting results.</div>
+                <div className="ts-card-result">{t('transformationStories.card1Result')}</div>
+                <div className="ts-card-desc">{t('transformationStories.card1Desc')}</div>
               </div>
               <div className="ts-card-img">
                 <div className="ts-before-after">
@@ -56,13 +58,13 @@ export default function TransformationStories() {
                 </div>
               </div>
               <div className="ts-card-footer">
-                <button className="ts-story-btn">View Story <span className="arrow-c"><i className="ph ph-arrow-right"></i></span></button>
+                <button className="ts-story-btn">{t('common:viewStory')} <span className="arrow-c"><i className="ph ph-arrow-right"></i></span></button>
               </div>
             </div>
             <div className="ts-card">
               <div className="ts-card-header">
-                <div className="ts-card-result">Less 6% Body Fat</div>
-                <div className="ts-card-desc">With structured training and accountability, she built habits that led to lasting results.</div>
+                <div className="ts-card-result">{t('transformationStories.card2Result')}</div>
+                <div className="ts-card-desc">{t('transformationStories.card2Desc')}</div>
               </div>
               <div className="ts-card-img">
                 <div className="ts-before-after">
@@ -71,13 +73,13 @@ export default function TransformationStories() {
                 </div>
               </div>
               <div className="ts-card-footer">
-                <button className="ts-story-btn">View Story <span className="arrow-c"><i className="ph ph-arrow-right"></i></span></button>
+                <button className="ts-story-btn">{t('common:viewStory')} <span className="arrow-c"><i className="ph ph-arrow-right"></i></span></button>
               </div>
             </div>
             <div className="ts-card">
               <div className="ts-card-header">
-                <div className="ts-card-result">+18kg Muscle Mass</div>
-                <div className="ts-card-desc">Went from skinny to strong in 16 weeks with elite personalised programming.</div>
+                <div className="ts-card-result">{t('transformationStories.card3Result')}</div>
+                <div className="ts-card-desc">{t('transformationStories.card3Desc')}</div>
               </div>
               <div className="ts-card-img">
                 <div className="ts-before-after">
@@ -86,13 +88,13 @@ export default function TransformationStories() {
                 </div>
               </div>
               <div className="ts-card-footer">
-                <button className="ts-story-btn">View Story <span className="arrow-c"><i className="ph ph-arrow-right"></i></span></button>
+                <button className="ts-story-btn">{t('common:viewStory')} <span className="arrow-c"><i className="ph ph-arrow-right"></i></span></button>
               </div>
             </div>
           </div>
         </div>
         <div className="ts-nav">
-          <button className="ts-nav-btn prev2" onClick={() => tsSlide2(-1)}>←</button>
+          <button className="ts-nav-btn prev2" onClick={() => tsSlide2(-1)}>{t('common:previous')}</button>
           <button className="ts-nav-btn next2" onClick={() => tsSlide2(1)}><i className="ph ph-arrow-right"></i></button>
         </div>
       </div>

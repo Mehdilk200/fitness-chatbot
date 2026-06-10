@@ -1,10 +1,14 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Community() {
+  const { t } = useTranslation('landing');
+
   return (
     <section id="community">
-      <div className="section-label">Join Our Community</div>
-      <h2>Connect with fellow fitness enthusiasts and stay motivated</h2>
+      <div className="section-label">{t('community.label')}</div>
+      <h2>{t('community.title')}</h2>
       <a href="#" className="ig-btn">
-        Follow Us on Instagram
+        {t('community.cta')}
         <span className="ig-btn-icon">↗</span>
       </a>
       <div className="community-photos">

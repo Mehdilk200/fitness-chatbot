@@ -1,35 +1,39 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Blog() {
+  const { t } = useTranslation('landing');
+
   return (
     <section id="blog">
       <div className="blog-header">
-        <h2>Latest Blog Posts</h2>
+        <h2>{t('blog.title')}</h2>
       </div>
       <div className="blog-grid">
         <div className="blog-card">
           <div className="blog-img"><img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=600&auto=format&fit=crop" alt="ACTIVITY" /></div>
           <div className="blog-body">
-            <div className="blog-date">February 17, 2024</div>
-            <h3>Three reasons why physical activity should be a routine</h3>
-            <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout, the point of using.</p>
-            <a href="#" className="blog-read">Read More...</a>
+            <div className="blog-date">{t('blog.card1Date')}</div>
+            <h3>{t('blog.card1Title')}</h3>
+            <p>{t('blog.card1Desc')}</p>
+            <a href="#" className="blog-read">{t('common:readMore')}</a>
           </div>
         </div>
         <div className="blog-card">
           <div className="blog-img"><img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&auto=format&fit=crop" alt="NUTRITION" /></div>
           <div className="blog-body">
-            <div className="blog-date">February 10, 2024</div>
-            <h3>Fitness and nutrition tips from the healthiest countries</h3>
-            <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout, the point of using.</p>
-            <a href="#" className="blog-read">Read More...</a>
+            <div className="blog-date">{t('blog.card2Date')}</div>
+            <h3>{t('blog.card2Title')}</h3>
+            <p>{t('blog.card2Desc')}</p>
+            <a href="#" className="blog-read">{t('common:readMore')}</a>
           </div>
         </div>
         <div className="blog-card">
           <div className="blog-img"><img src="https://images.unsplash.com/photo-1472745433479-4556f22e32c2?q=80&w=600&auto=format&fit=crop" alt="KIDS FIT" /></div>
           <div className="blog-body">
-            <div className="blog-date">February 2, 2024</div>
-            <h3>How to get your kids moving though out summer 2024</h3>
-            <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout, the point of using.</p>
-            <a href="#" className="blog-read">Read More...</a>
+            <div className="blog-date">{t('blog.card3Date')}</div>
+            <h3>{t('blog.card3Title')}</h3>
+            <p>{t('blog.card3Desc')}</p>
+            <a href="#" className="blog-read">{t('common:readMore')}</a>
           </div>
         </div>
       </div>

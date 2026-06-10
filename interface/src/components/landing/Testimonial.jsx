@@ -1,15 +1,19 @@
+import { useTranslation } from 'react-i18next';
+
 export default function Testimonial() {
+  const { t } = useTranslation('landing');
+
   return (
     <section id="testimonial" className="landing-section">
       <div className="testimonial-text">
-        <div className="section-label">Testimonial</div>
-        <h2>Transformations That Speak Louder Than Words.</h2>
+        <div className="section-label">{t('testimonial.label')}</div>
+        <h2>{t('testimonial.title')}</h2>
         <div className="quote-card">
           <span className="quote-mark">"</span>
-          <blockquote>Before joining Fitne, I struggled with consistency. The coaches have pushed me past my limits, and now I feel stronger, more confident, and in the best shape of my life.</blockquote>
+          <blockquote>{t('testimonial.quote')}</blockquote>
           <div style={{ marginTop: "24px" }}>
-            <div className="quote-author">Mark R.</div>
-            <div className="quote-role">Brand Manager</div>
+            <div className="quote-author">{t('testimonial.author')}</div>
+            <div className="quote-role">{t('testimonial.role')}</div>
           </div>
         </div>
       </div>

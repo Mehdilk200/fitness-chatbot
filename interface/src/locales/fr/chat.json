@@ -1,0 +1,19 @@
+{
+  "title": "Coach Fitness IA",
+  "inputPlaceholder": "Demandez-moi tout sur l'entraînement, la nutrition ou les progrès...",
+  "quickWorkout": "Créer un entraînement",
+  "quickNutrition": "Plan nutritionnel",
+  "quickProgress": "Mes progrès",
+  "quickMotivation": "Motivez-moi",
+  "welcomeTitle": "Votre Coach IA",
+  "welcomeSubtitle": "Demandez tout sur le fitness, la nutrition ou vos objectifs personnels.",
+  "historyTitle": "Conversations Récentes",
+  "historyEmpty": "Aucune conversation précédente.",
+  "newChat": "Nouvelle Discussion",
+  "discussions": "Discussions",
+  "deleteConfirm": "Supprimer cette conversation ?",
+  "rename": "Renommer",
+  "today": "Aujourd'hui",
+  "yesterday": "Hier",
+  "daysAgo": "Il y a {{count}} jours"
+}

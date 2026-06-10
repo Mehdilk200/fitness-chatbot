@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function TestimonialsCarousel() {
+  const { t } = useTranslation('landing');
   const [tcIndex, setTcIndex] = useState(0);
 
   const tcSlide = (dir) => {
@@ -15,40 +17,40 @@ export default function TestimonialsCarousel() {
   return (
     <section id="testimonials-carousel">
       <div className="tc-header">
-        <h2>Read Why Our Customers Love <em>EliteFiT</em></h2>
+        <h2>{t('testimonialsCarousel.title')}</h2>
         <div className="tc-nav">
-          <button onClick={() => tcSlide(-1)}>←</button>
+          <button onClick={() => tcSlide(-1)}>{t('common:previous')}</button>
           <button onClick={() => tcSlide(1)}><i className="ph ph-arrow-right"></i></button>
         </div>
       </div>
       <div className="tc-track-wrap">
         <div className="tc-track" id="tcTrack" style={{ transform: `translateX(-${tcIndex * (300 + 16)}px)` }}>
           <div className="tc-card">
-            <p><strong>'EliteFiT'</strong> has been life-changing. I am 72 years old and have been working out with Damian since October 2022. We meet 3 times a week. I travel a lot, and I am able to stick with my exercise routine no matter where I am!</p>
+            <p><strong>'EliteFiT'</strong> {t('testimonialsCarousel.card1')}</p>
             <div className="tc-author">
               <div className="tc-avatar">D</div>
-              <div className="tc-author-info"><div className="name">Donna</div><div className="loc">Oregon</div></div>
+              <div className="tc-author-info"><div className="name">{t('testimonialsCarousel.card1Author')}</div><div className="loc">{t('testimonialsCarousel.card1Loc')}</div></div>
             </div>
           </div>
           <div className="tc-card">
-            <p>I love <strong>EliteFiT</strong>. I have been working out with Martin, my trainer, four times a week for a few months now. It's totally changed my fitness routine. I could have never been able to afford a personal trainer normally.</p>
+            <p>{t('testimonialsCarousel.card2')}</p>
             <div className="tc-author">
               <div className="tc-avatar">M</div>
-              <div className="tc-author-info"><div className="name">Mary Z.</div><div className="loc">California</div></div>
+              <div className="tc-author-info"><div className="name">{t('testimonialsCarousel.card2Author')}</div><div className="loc">{t('testimonialsCarousel.card2Loc')}</div></div>
             </div>
           </div>
           <div className="tc-card">
-            <p>From day one the coaches pushed me beyond what I thought was possible. Six months in and I've lost 22kg and gained more confidence than I've ever had. <strong>EliteFiT</strong> isn't just a gym — it's a community.</p>
+            <p>{t('testimonialsCarousel.card3')}</p>
             <div className="tc-author">
               <div className="tc-avatar">J</div>
-              <div className="tc-author-info"><div className="name">James K.</div><div className="loc">New York</div></div>
+              <div className="tc-author-info"><div className="name">{t('testimonialsCarousel.card3Author')}</div><div className="loc">{t('testimonialsCarousel.card3Loc')}</div></div>
             </div>
           </div>
           <div className="tc-card">
-            <p>The personalised approach at <strong>EliteFiT</strong> is unlike anything I've experienced. My coach actually understands my goals and adjusts my plan every week. Best investment I've made in myself.</p>
+            <p>{t('testimonialsCarousel.card4')}</p>
             <div className="tc-author">
               <div className="tc-avatar">R</div>
-              <div className="tc-author-info"><div className="name">Ryan S.</div><div className="loc">Texas</div></div>
+              <div className="tc-author-info"><div className="name">{t('testimonialsCarousel.card4Author')}</div><div className="loc">{t('testimonialsCarousel.card4Loc')}</div></div>
             </div>
           </div>
         </div>

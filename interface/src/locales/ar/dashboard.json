@@ -1,0 +1,21 @@
+{
+  "pageTitle": "لوحة التحكم",
+  "kpiCalories": "السعرات",
+  "kpiWorkouts": "التمارين",
+  "kpiMinutes": "الدقائق النشطة",
+  "kpiStreak": "الأيام المتتالية",
+  "chartTitle": "نظرة عامة على التقدم",
+  "muscleChest": "الصدر",
+  "muscleBack": "الظهر",
+  "muscleShoulders": "الكتفين",
+  "muscleLegs": "الساقين",
+  "muscleArms": "الذراعين",
+  "muscleCore": "الوسط",
+  "planTitle": "خطتك الحالية",
+  "planDesc": "عضوية ممتازة - وصول كامل لجميع الميزات",
+  "planStatus": "نشط",
+  "upgrade": "ترقية الخطة",
+  "exercises": "التمارين",
+  "noExercises": "لم يتم العثور على تمارين",
+  "searchPlaceholder": "ابحث عن تمارين..."
+}

@@ -1,0 +1,19 @@
+{
+  "title": "AI Fitness Coach",
+  "inputPlaceholder": "Ask me anything about training, nutrition, or progress...",
+  "quickWorkout": "Create a workout",
+  "quickNutrition": "Nutrition plan",
+  "quickProgress": "My progress",
+  "quickMotivation": "Motivate me",
+  "welcomeTitle": "Your AI Coach",
+  "welcomeSubtitle": "Ask anything about fitness, nutrition, or your personal goals.",
+  "historyTitle": "Recent Conversations",
+  "historyEmpty": "No previous conversations yet.",
+  "newChat": "New Chat",
+  "discussions": "Discussions",
+  "deleteConfirm": "Delete this conversation?",
+  "rename": "Rename",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "daysAgo": "{{count}} days ago"
+}

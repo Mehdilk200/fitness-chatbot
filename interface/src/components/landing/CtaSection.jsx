@@ -1,13 +1,17 @@
+import { useTranslation } from 'react-i18next';
+
 export default function CtaSection() {
+  const { t } = useTranslation('landing');
+
   return (
     <section id="cta" className="landing-section">
       <div className="cta-left">
-        <div className="section-label" style={{ color: "rgba(255,255,255,0.4)" }}>Get In Touch</div>
-        <h2>Ready to<br /><span>Transform?</span></h2>
+        <div className="section-label" style={{ color: "rgba(255,255,255,0.4)" }}>{t('cta.label')}</div>
+        <h2>{t('cta.title')}</h2>
       </div>
       <div className="cta-right">
-        <p>No excuses. No limits. Just results. The strongest version of you is already inside you — let's bring it out together. Be bold.</p>
-        <button className="cta-btn">Start Your Transformation <i className="ph ph-arrow-right"></i></button>
+        <p>{t('cta.description')}</p>
+        <button className="cta-btn">{t('cta.cta')} <i className="ph ph-arrow-right"></i></button>
       </div>
     </section>
   );

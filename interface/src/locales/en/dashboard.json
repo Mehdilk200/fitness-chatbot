@@ -1,0 +1,21 @@
+{
+  "pageTitle": "Dashboard",
+  "kpiCalories": "Calories",
+  "kpiWorkouts": "Workouts",
+  "kpiMinutes": "Active Minutes",
+  "kpiStreak": "Day Streak",
+  "chartTitle": "Progress Overview",
+  "muscleChest": "Chest",
+  "muscleBack": "Back",
+  "muscleShoulders": "Shoulders",
+  "muscleLegs": "Legs",
+  "muscleArms": "Arms",
+  "muscleCore": "Core",
+  "planTitle": "Your Current Plan",
+  "planDesc": "Premium Membership — full access to all features",
+  "planStatus": "Active",
+  "upgrade": "Upgrade Plan",
+  "exercises": "Exercises",
+  "noExercises": "No exercises found",
+  "searchPlaceholder": "Search exercises..."
+}

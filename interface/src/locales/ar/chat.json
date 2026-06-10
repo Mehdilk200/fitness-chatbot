@@ -1,0 +1,19 @@
+{
+  "title": "مدرب اللياقة الذكي",
+  "inputPlaceholder": "اسألني عن أي شيء يتعلق بالتدريب أو التغذية أو التقدم...",
+  "quickWorkout": "أنشئ تمرينًا",
+  "quickNutrition": "خطة تغذية",
+  "quickProgress": "تقدّمي",
+  "quickMotivation": "حفزني",
+  "welcomeTitle": "مدربك الذكي",
+  "welcomeSubtitle": "اسأل عن أي شيء يتعلق باللياقة أو التغذية أو أهدافك الشخصية.",
+  "historyTitle": "المحادثات السابقة",
+  "historyEmpty": "لا توجد محادثات سابقة بعد.",
+  "newChat": "محادثة جديدة",
+  "discussions": "المحادثات",
+  "deleteConfirm": "هل تريد حذف هذه المحادثة؟",
+  "rename": "إعادة تسمية",
+  "today": "اليوم",
+  "yesterday": "أمس",
+  "daysAgo": "قبل {{count}} يوم"
+}

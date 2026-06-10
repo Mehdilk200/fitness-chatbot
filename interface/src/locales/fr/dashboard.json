@@ -1,0 +1,21 @@
+{
+  "pageTitle": "Tableau de Bord",
+  "kpiCalories": "Calories",
+  "kpiWorkouts": "Entraînements",
+  "kpiMinutes": "Minutes Actives",
+  "kpiStreak": "Jours Consécutifs",
+  "chartTitle": "Aperçu des Progrès",
+  "muscleChest": "Pectoraux",
+  "muscleBack": "Dos",
+  "muscleShoulders": "Épaules",
+  "muscleLegs": "Jambes",
+  "muscleArms": "Bras",
+  "muscleCore": "Abdominaux",
+  "planTitle": "Votre Abonnement Actuel",
+  "planDesc": "Abonnement Premium — accès complet à toutes les fonctionnalités",
+  "planStatus": "Actif",
+  "upgrade": "Améliorer l'Abonnement",
+  "exercises": "Exercices",
+  "noExercises": "Aucun exercice trouvé",
+  "searchPlaceholder": "Rechercher des exercices..."
+}

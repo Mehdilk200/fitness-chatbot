@@ -19,7 +19,7 @@ export default function TestimonialsCarousel() {
       <div className="tc-header">
         <h2>{t('testimonialsCarousel.title')}</h2>
         <div className="tc-nav">
-          <button onClick={() => tcSlide(-1)}>{t('common:previous')}</button>
+          <button onClick={() => tcSlide(-1)}><i className="ph ph-arrow-left"></i></button>
           <button onClick={() => tcSlide(1)}><i className="ph ph-arrow-right"></i></button>
         </div>
       </div>

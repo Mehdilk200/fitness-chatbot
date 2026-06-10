@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Map, Marker } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -17,6 +17,17 @@ const center = {
 };
 
 function MapboxMap({ accessToken }) {
+  const [zoom, setZoom] = useState(15.0);
+
+  useEffect(() => {
+    const updateZoom = () => {
+      setZoom(window.innerWidth < 768 ? 7.5 : 15.0);
+    };
+    updateZoom();
+    window.addEventListener('resize', updateZoom);
+    return () => window.removeEventListener('resize', updateZoom);
+  }, []);
+
   if (!accessToken) {
     return (
       <div style={{...containerStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: '#c8f135', textAlign: 'center', padding: '20px'}}>
@@ -33,7 +44,7 @@ function MapboxMap({ accessToken }) {
       <Map
         initialViewState={{
           ...center,
-          zoom: 15.0
+          zoom
         }}
         style={{width: '100%', height: '100%'}}
         mapStyle="mapbox://styles/mapbox/dark-v11"

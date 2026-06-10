@@ -15,15 +15,22 @@ export default function Navbar({ theme, toggleTheme }) {
     <>
       <div className={`nav-overlay ${drawerOpen ? 'open' : ''}`} onClick={closeDrawer} />
       <div className={`nav-drawer ${drawerOpen ? 'open' : ''}`}>
-        <ul>
-          <li><a href="#about" onClick={closeDrawer}>{t('nav.product')}</a></li>
-          <li><a href="#services" onClick={closeDrawer}>{t('nav.services')}</a></li>
-          <li><a href="#stats" onClick={closeDrawer}>{t('nav.trainer')}</a></li>
-          <li><a href="#testimonial" onClick={closeDrawer}>{t('nav.testimonial')}</a></li>
-          <li><a href="#pricing" onClick={closeDrawer}>{t('nav.pricing')}</a></li>
-          <li><a href="#contact" onClick={closeDrawer}>{t('nav.contact')}</a></li>
-        </ul>
-        <Link to="/auth?mode=register" className="drawer-cta" onClick={closeDrawer}>{t('common:getStarted')}</Link>
+        <div className="drawer-header">
+          <button className="drawer-close" onClick={closeDrawer} aria-label="Close menu">
+            <i className="ph ph-x"></i>
+          </button>
+        </div>
+        <div className="drawer-body">
+          <ul>
+            <li><a href="#about" onClick={closeDrawer}>{t('nav.product')}</a></li>
+            <li><a href="#services" onClick={closeDrawer}>{t('nav.services')}</a></li>
+            <li><a href="#stats" onClick={closeDrawer}>{t('nav.trainer')}</a></li>
+            <li><a href="#testimonial" onClick={closeDrawer}>{t('nav.testimonial')}</a></li>
+            <li><a href="#pricing" onClick={closeDrawer}>{t('nav.pricing')}</a></li>
+            <li><a href="#contact" onClick={closeDrawer}>{t('nav.contact')}</a></li>
+          </ul>
+          <Link to="/auth?mode=register" className="drawer-cta" onClick={closeDrawer}>{t('common:getStarted')}</Link>
+        </div>
       </div>
       <nav className="landing-nav">
         <Link to="/" className="logo-img-wrap" style={{ textDecoration: "none" }}>

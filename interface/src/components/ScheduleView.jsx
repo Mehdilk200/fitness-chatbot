@@ -5,7 +5,7 @@ import './ScheduleView.css';
 import { toast } from './Toast';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const TIMES = Array.from({ length: 8 }, (_, i) => `${(i * 2 + 6).toString().padStart(2, '0')}:00`);
+const TIMES = Array.from({ length: 9 }, (_, i) => `${(i * 2 + 6).toString().padStart(2, '0')}:00`);
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function ScheduleView() {
@@ -20,6 +20,7 @@ export default function ScheduleView() {
   const [viewItem, setViewItem] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [mobileDayIndex, setMobileDayIndex] = useState(0);
   const [formData, setFormData] = useState({
     muscle_group: colorMap[0]["muscle name"],
     day: 'Mon',
@@ -242,19 +243,17 @@ export default function ScheduleView() {
     <div className="schedule-layout">
       <div className="schedule-main">
         <div className="schedule-header">
-          <div className="schedule-title-area">
-            <h1>Schedule Task</h1>
+          <h1>Schedule Task</h1>
+          <div className="schedule-header-controls">
             <div className="month-selector">
               <span className="current-month-label">{MONTHS[currentDate.getMonth()]}, {currentDate.getFullYear()}</span>
               <div className="month-nav-btns">
-                <button className="nav-btn" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}><i className="ph ph-caret-left"></i></button>
-                <button className="nav-btn active" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}><i className="ph ph-caret-right"></i></button>
+                <button className="nav-btn nav-btn-sm" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}><i className="ph ph-caret-left"></i></button>
+                <button className="nav-btn nav-btn-sm" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}><i className="ph ph-caret-right"></i></button>
               </div>
             </div>
-          </div>
-          
-          <div className="header-controls">
-            <div className="filter-group">
+            <div className="right-controls">
+              <div className="filter-group">
               <div className="custom-select" tabIndex={0} onBlur={() => setTimeout(() => setShowFilterDropdown(false), 150)}>
                 <button 
                   className="filter-select-trigger" 
@@ -291,25 +290,35 @@ export default function ScheduleView() {
                   </div>
                 )}
               </div>
-            </div>
-            <div className="view-toggle">
-              <button 
-                className={`toggle-btn ${viewMode === 'Week' ? 'active' : ''}`}
-                onClick={() => setViewMode('Week')}
-              >Week</button>
-              <button 
-                className={`toggle-btn ${viewMode === 'Month' ? 'active' : ''}`}
-                onClick={() => setViewMode('Month')}
-              >Month</button>
+              </div>
+              <div className="view-toggle">
+                <button 
+                  className={`toggle-btn ${viewMode === 'Week' ? 'active' : ''}`}
+                  onClick={() => setViewMode('Week')}
+                >Week</button>
+                <button 
+                  className={`toggle-btn ${viewMode === 'Month' ? 'active' : ''}`}
+                  onClick={() => setViewMode('Month')}
+                >Month</button>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="schedule-grid-wrapper">
-          <div className="schedule-grid">
+          <div className="mobile-day-bar">
+            <button className="mobile-day-arrow" onClick={() => setMobileDayIndex(prev => Math.max(0, prev - 1))} disabled={mobileDayIndex === 0}>
+              <i className="ph ph-caret-left"></i>
+            </button>
+            <span className="mobile-day-label">{DAYS[mobileDayIndex]}</span>
+            <button className="mobile-day-arrow" onClick={() => setMobileDayIndex(prev => Math.min(DAYS.length - 1, prev + 1))} disabled={mobileDayIndex === DAYS.length - 1}>
+              <i className="ph ph-caret-right"></i>
+            </button>
+          </div>
+          <div className="schedule-grid" data-mobile-day={DAYS[mobileDayIndex]}>
             <div className="grid-corner">Time</div>
             {DAYS.map(day => (
-              <div key={day} className="grid-day-header">{day}</div>
+              <div key={day} className="grid-day-header" data-day={day}>{day}</div>
             ))}
 
             {TIMES.map(time => (
@@ -321,8 +330,7 @@ export default function ScheduleView() {
                     <div 
                       key={`${day}-${time}`} 
                       className="grid-cell"
-                      data-date={day}
-                      data-time={time}
+                      data-day={day}
                       onClick={() => handleCellClick(day, time, items)}
                     >
                       {items.map(item => (
@@ -417,7 +425,10 @@ export default function ScheduleView() {
             </div>
             <form onSubmit={handleSave}>
               <div className="form-group">
-                <label>Muscle Group</label>
+                <div className="form-group-header">
+                  <div className="field-icon-badge muscle"><i className="ph ph-dumbbell"></i></div>
+                  <label>Muscle Group</label>
+                </div>
                 <select 
                   value={formData.muscle_group} 
                   onChange={(e) => {
@@ -432,28 +443,43 @@ export default function ScheduleView() {
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Day</label>
+                  <div className="form-group-header">
+                    <div className="field-icon-badge day"><i className="ph ph-calendar"></i></div>
+                    <label>Day</label>
+                  </div>
                   <select value={formData.day} onChange={(e) => setFormData({...formData, day: e.target.value})}>
                     {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Calories</label>
+                  <div className="form-group-header">
+                    <div className="field-icon-badge calories"><i className="ph ph-fire"></i></div>
+                    <label>Calories</label>
+                  </div>
                   <input type="number" placeholder="kcal" value={formData.calories} onChange={(e) => setFormData({...formData, calories: parseInt(e.target.value) || 0})} />
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Start Time</label>
+                  <div className="form-group-header">
+                    <div className="field-icon-badge time"><i className="ph ph-clock"></i></div>
+                    <label>Start Time</label>
+                  </div>
                   <input type="time" value={formData.start_time} onChange={(e) => setFormData({...formData, start_time: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>End Time</label>
+                  <div className="form-group-header">
+                    <div className="field-icon-badge time"><i className="ph ph-clock"></i></div>
+                    <label>End Time</label>
+                  </div>
                   <input type="time" value={formData.end_time} onChange={(e) => setFormData({...formData, end_time: e.target.value})} />
                 </div>
               </div>
               <div className="form-group">
-                <label>Workout Image</label>
+                <div className="form-group-header">
+                  <div className="field-icon-badge image"><i className="ph ph-camera"></i></div>
+                  <label>Workout Image</label>
+                </div>
                 <div className="image-upload-box">
                   {formData.image_url ? (
                     <div className="preview-container">
@@ -470,7 +496,10 @@ export default function ScheduleView() {
                 </div>
               </div>
               <div className="form-group">
-                <label>Notes (Optional)</label>
+                <div className="form-group-header">
+                  <div className="field-icon-badge notes"><i className="ph ph-note-pencil"></i></div>
+                  <label>Notes (Optional)</label>
+                </div>
                 <textarea 
                   placeholder="e.g. 4 sets of 12 reps" 
                   value={formData.notes} 

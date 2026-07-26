@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
-import ThemeToggle from '../components/ThemeToggle';
+import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import WearableModal from '../components/WearableModal';
 import { authApi, wearableApi } from '../services/api';
 import { 
@@ -46,7 +45,9 @@ const muscleToApiMap = {
 
 export default function Dashboard({ theme, toggleTheme }) {
   const { userEmail } = useOutletContext();
-  const [activeTab, setActiveTab] = useState('Nutrition');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'Nutrition');
   const [userName, setUserName] = useState('');
   const [userFullName, setUserFullName] = useState('');
 
@@ -103,6 +104,11 @@ export default function Dashboard({ theme, toggleTheme }) {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) setActiveTab(tab);
+  }, [searchParams, activeTab]);
 
   const handleWearableConnected = () => {
     wearableApi.getStatus().then(res => {
@@ -276,6 +282,7 @@ export default function Dashboard({ theme, toggleTheme }) {
   const [selectedMuscle, setSelectedMuscle] = useState(colorMap[0]);
   const [muscleSearch, setMuscleSearch] = useState('');
   const [showMuscleDropdown, setShowMuscleDropdown] = useState(false);
+  const [anatomyView, setAnatomyView] = useState('front');
   const [exercises, setExercises] = useState([]);
   const [currentExIndex, setCurrentExIndex] = useState(0);
   const [loadingEx, setLoadingEx] = useState(false);
@@ -330,7 +337,7 @@ export default function Dashboard({ theme, toggleTheme }) {
   return (
     <main className="dash-main">
       <div className="dash-content compact">
-          {/* Header & Tabs */}
+          {/* Header & Tabs - desktop */}
           <div className="dash-header-top">
             <div className="dash-nav-pills">
               {['Workouts', 'Nutrition', 'AI Coach', 'Metrics'].map(tab => (
@@ -343,17 +350,17 @@ export default function Dashboard({ theme, toggleTheme }) {
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button className="topbar-btn"><i className="ph ph-magnifying-glass"></i></button>
+            <div className="desktop-header-actions">
+              <button className="topbar-btn" onClick={() => navigate('/chat')}><i className="ph ph-magnifying-glass"></i></button>
               <Link to="/profile" className="header-action-btn"><i className="ph ph-user-circle"></i> Mon profil</Link>
-              <button className="header-action-btn"><i className="ph ph-chat-circle"></i> ChatBot AI</button>
+              <button className="header-action-btn" onClick={() => navigate('/chat')}><i className="ph ph-chat-circle"></i> ChatBot AI</button>
               <button className={`header-action-btn ${wearableConnected ? 'status-connected' : 'status-disconnected'}`} onClick={() => setIsWearableModalOpen(true)}>
                 <i className={`ph ${wearableConnected ? 'ph-plugs-connected' : 'ph-plugs'}`}></i> Connected
               </button>
-              <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
             </div>
           </div>
 
+          <div key={activeTab} className="tab-content">
           {activeTab === 'Nutrition' && (
             <>
               <div className="dash-user-greet">
@@ -366,9 +373,9 @@ export default function Dashboard({ theme, toggleTheme }) {
                   <div key={t} className="task-card-mini">
                     <div className="label" style={{ fontSize: '11px' }}>{t}</div>
                     {idx === 0 ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div className="plan-progress-circle" style={{ width: '32px', height: '32px', borderTopColor: '#ff5c5c', fontSize: '10px', borderThickness: '3px' }}>80%</div>
-                        <div style={{ fontSize: '10px', fontWeight: '600', lineHeight: 1.1 }}>3 goals out of 6 completed</div>
+                      <div className="plan-stats">
+                        <span className="plan-pct">80%</span>
+                        <span className="plan-sub">3 goals out of 6 completed</span>
                       </div>
                     ) : (
                       <div className="value" style={{ fontSize: '18px' }}>{idx === 1 ? '8.3 hr' : idx === 2 ? '2376' : idx === 3 ? '1200 kkal' : '63 bpm'}</div>
@@ -382,15 +389,15 @@ export default function Dashboard({ theme, toggleTheme }) {
                 <div className="col-overview" style={{ gridColumn: 'span 3' }}>
                   <div className="card-v2">
                     <div className="card-v2-header"><h3>Overview</h3></div>
-                    <div className="overview-content" style={{ gap: '12px' }}>
-                      <div style={{ width: '80px', position: 'relative' }}>
+                    <div className="overview-content">
+                      <div style={{ position: 'relative' }}>
                         <Doughnut data={{ datasets: [{ data: [65, 35], backgroundColor: ['#c8f135', '#222'], borderWidth: 0, cutout: '80%' }] }} options={{ plugins: { legend: { display: false } } }} />
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '800' }}>+23%</div>
+                        <div className="overview-center">+23%</div>
                       </div>
-                      <div className="legend-list" style={{ gap: '4px' }}>
-                        <div className="legend-item" style={{ fontSize: '10px' }}><div className="legend-info"><div className="dot-v2" style={{ width: '6px', height: '6px', background: '#c8f135' }}></div> Cal.</div> <strong>33.5%</strong></div>
-                        <div className="legend-item" style={{ fontSize: '10px' }}><div className="legend-info"><div className="dot-v2" style={{ width: '6px', height: '6px', background: '#ff5c5c' }}></div> Prot.</div> <strong>23.0%</strong></div>
-                        <div className="legend-item" style={{ fontSize: '10px' }}><div className="legend-info"><div className="dot-v2" style={{ width: '6px', height: '6px', background: 'white' }}></div> Carb.</div> <strong>11.2%</strong></div>
+                      <div className="legend-list">
+                        <div className="legend-item"><div className="legend-info"><span className="dot-v2" style={{ background: '#c8f135' }}></span> Cal.</div> <strong>33.5%</strong></div>
+                        <div className="legend-item"><div className="legend-info"><span className="dot-v2" style={{ background: '#ff5c5c' }}></span> Prot.</div> <strong>23.0%</strong></div>
+                        <div className="legend-item"><div className="legend-info"><span className="dot-v2" style={{ background: '#4a9eff' }}></span> Carb.</div> <strong>11.2%</strong></div>
                       </div>
                     </div>
                   </div>
@@ -399,11 +406,13 @@ export default function Dashboard({ theme, toggleTheme }) {
                 <div className="col-calories" style={{ gridColumn: 'span 3' }}>
                   <div className="card-v2">
                     <div className="card-v2-header"><h3>Calories</h3></div>
-                    <div style={{ position: 'relative', height: '100px' }}>
-                      <Doughnut data={caloriesData} options={{ plugins: { legend: { display: false } } }} />
-                      <div style={{ position: 'absolute', bottom: '0', width: '100%', textAlign: 'center' }}>
-                        <div style={{ fontSize: '18px', fontWeight: '800' }}>95.50%</div>
-                        <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Based on workout</div>
+                    <div className="calories-content">
+                      <div className="calories-chart">
+                        <Doughnut data={caloriesData} options={{ plugins: { legend: { display: false } } }} />
+                      </div>
+                      <div className="calories-stats">
+                        <div className="calories-pct">95.50%</div>
+                        <div className="calories-sub">Based on workout</div>
                       </div>
                     </div>
                   </div>
@@ -549,7 +558,7 @@ export default function Dashboard({ theme, toggleTheme }) {
 
                   <div className="summary-v3">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px', fontWeight: '700' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '700' }}>
                         <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(84, 160, 255, 0.1)', color: '#54a0ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><i className={`ph ${displayData.summary.icon}`}></i></div>
                         {displayData.summary.label}
                       </div>
@@ -601,24 +610,27 @@ export default function Dashboard({ theme, toggleTheme }) {
                 {/* Left Card: Musculature Anatomy */}
                 <div className="coach-card anatomy-card">
                   <h2 className="coach-title">Musculature Anatomy</h2>
-                  <div className="muscle-search-box">
-                    <input 
-                      type="text" 
-                      placeholder="Search muscle..." 
-                      value={muscleSearch}
-                      onChange={(e) => {
-                        setMuscleSearch(e.target.value);
-                        setShowMuscleDropdown(true);
-                      }}
-                      onFocus={() => setShowMuscleDropdown(true)}
-                      className="muscle-search-input"
-                    />
-                    <button 
-                      className="muscle-dropdown-btn" 
-                      onClick={() => setShowMuscleDropdown(!showMuscleDropdown)}
-                    >
-                      <i className="ph ph-list"></i>
-                    </button>
+                    <div className="muscle-search-box">
+                      <div className="muscle-search-inner">
+                        <input 
+                          type="text" 
+                          placeholder="Search muscle..." 
+                          value={muscleSearch}
+                          onChange={(e) => {
+                            setMuscleSearch(e.target.value);
+                            setShowMuscleDropdown(true);
+                          }}
+                          onFocus={() => setShowMuscleDropdown(true)}
+                          className="muscle-search-input"
+                        />
+                        <span className="muscle-search-divider"></span>
+                        <button 
+                          className="muscle-dropdown-btn" 
+                          onClick={() => setShowMuscleDropdown(!showMuscleDropdown)}
+                        >
+                          <i className="ph ph-list"></i>
+                        </button>
+                      </div>
                     {showMuscleDropdown && (
                       <div className="muscle-dropdown">
                         {filteredMuscles.map((muscle, idx) => (
@@ -646,63 +658,65 @@ export default function Dashboard({ theme, toggleTheme }) {
                     </div>
                   </div>
                   
-                  <div className="anatomy-images">
-                    <div className="anatomy-img-box">
-                      <img src={faceImg} alt="Anatomy Front" className="anatomy-image" />
-                      <svg className="anatomy-overlay" viewBox="0 0 300 400">
-                        {/* Pectoralis (Chest) - Center chest area */}
-                        <circle cx="150" cy="120" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Pectoralis Major (Chest)"))} title="Pectoralis Major (Chest)" />
-                        {/* Deltoids (Shoulders) - Shoulder area */}
-                        <circle cx="85" cy="95" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
-                        <circle cx="215" cy="95" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
-                        {/* Biceps - Upper arm */}
-                        <circle cx="55" cy="145" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
-                        <circle cx="245" cy="145" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
-                        {/* Forearms - Lower arm */}
-                        <circle cx="55" cy="195" r="12" fill="rgba(200, 180, 160, 0.6)" stroke="rgba(200, 180, 160, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Forearms (Brachioradialis / Extensors)"))} title="Forearms (Brachioradialis / Extensors)" />
-                        <circle cx="245" cy="195" r="12" fill="rgba(200, 180, 160, 0.6)" stroke="rgba(200, 180, 160, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Forearms (Brachioradialis / Extensors)"))} title="Forearms (Brachioradialis / Extensors)" />
-                        {/* Abs - Center abdomen */}
-                        <circle cx="150" cy="200" r="14" fill="rgba(163, 56, 93, 0.6)" stroke="rgba(163, 56, 93, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Rectus Abdominis (Abs)"))} title="Rectus Abdominis (Abs)" />
-                        {/* Serratus Anterior / Obliques - Sides of torso */}
-                        <circle cx="100" cy="210" r="12" fill="rgba(200, 130, 50, 0.6)" stroke="rgba(200, 130, 50, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Serratus Anterior & External Obliques"))} title="Serratus Anterior & External Obliques" />
-                        <circle cx="200" cy="210" r="12" fill="rgba(200, 130, 50, 0.6)" stroke="rgba(200, 130, 50, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Serratus Anterior & External Obliques"))} title="Serratus Anterior & External Obliques" />
-                        {/* Quadriceps - Front thigh */}
-                        <circle cx="115" cy="290" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Rectus Femoris (Quadriceps)"))} title="Rectus Femoris (Quadriceps)" />
-                        <circle cx="185" cy="290" r="14" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Medialis (Quadriceps)"))} title="Vastus Medialis (Quadriceps)" />
-                        {/* Vastus Lateralis - Outer thigh */}
-                        <circle cx="100" cy="300" r="12" fill="rgba(90, 140, 200, 0.6)" stroke="rgba(90, 140, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Lateralis (Quadriceps)"))} title="Vastus Lateralis (Quadriceps)" />
-                        <circle cx="200" cy="300" r="12" fill="rgba(90, 140, 200, 0.6)" stroke="rgba(90, 140, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Lateralis (Quadriceps)"))} title="Vastus Lateralis (Quadriceps)" />
-                        {/* Calves - Lower leg */}
-                        <circle cx="130" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
-                        <circle cx="170" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
-                      </svg>
-                    </div>
-                    <div className="anatomy-img-box">
-                      <img src={backImg} alt="Anatomy Back" className="anatomy-image" />
-                      <svg className="anatomy-overlay" viewBox="0 0 300 400">
-                        {/* Trapezius - Upper back/neck */}
-                        <circle cx="150" cy="85" r="14" fill="rgba(200, 160, 100, 0.6)" stroke="rgba(200, 160, 100, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Trapezius (Upper Back / Neck)"))} title="Trapezius (Upper Back / Neck)" />
-                        {/* Posterior Deltoids - Back shoulders */}
-                        <circle cx="85" cy="95" r="12" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
-                        <circle cx="215" cy="95" r="12" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
-                        {/* Triceps - Posterior arm */}
-                        <circle cx="55" cy="145" r="12" fill="rgba(160, 180, 200, 0.6)" stroke="rgba(160, 180, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Triceps Brachii"))} title="Triceps Brachii" />
-                        <circle cx="245" cy="145" r="12" fill="rgba(160, 180, 200, 0.6)" stroke="rgba(160, 180, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Triceps Brachii"))} title="Triceps Brachii" />
-                        {/* Lats - Back middle */}
-                        <circle cx="120" cy="165" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
-                        <circle cx="180" cy="165" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
-                        {/* Erector Spinae (Lower back) - Center lower back */}
-                        <circle cx="150" cy="240" r="14" fill="rgba(163, 56, 93, 0.6)" stroke="rgba(163, 56, 93, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Erector Spinae (Lower Back)"))} title="Erector Spinae (Lower Back)" />
-                        {/* Glutes - Buttocks */}
-                        <circle cx="125" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
-                        <circle cx="175" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
-                        {/* Hamstrings - Back thigh */}
-                        <circle cx="125" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
-                        <circle cx="175" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
-                        {/* Calves - Back lower leg */}
-                        <circle cx="130" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
-                        <circle cx="170" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
-                      </svg>
+                  <div className="anatomy-slider-wrapper">
+                    <div className="anatomy-images">
+                      <div className={`anatomy-img-box ${anatomyView === 'front' ? 'active' : ''}`}>
+                        <img src={faceImg} alt="Anatomy Front" className="anatomy-image" />
+                        <svg className="anatomy-overlay" viewBox="0 0 300 400">
+                          {/* Pectoralis (Chest) - Center chest area */}
+                          <circle cx="150" cy="120" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Pectoralis Major (Chest)"))} title="Pectoralis Major (Chest)" />
+                          {/* Deltoids (Shoulders) - Shoulder area */}
+                          <circle cx="85" cy="95" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                          <circle cx="215" cy="95" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                          {/* Biceps - Upper arm */}
+                          <circle cx="55" cy="145" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
+                          <circle cx="245" cy="145" r="12" fill="rgba(239, 202, 202, 0.6)" stroke="rgba(239, 202, 202, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Biceps Brachii"))} title="Biceps Brachii" />
+                          {/* Forearms - Lower arm */}
+                          <circle cx="55" cy="195" r="12" fill="rgba(200, 180, 160, 0.6)" stroke="rgba(200, 180, 160, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Forearms (Brachioradialis / Extensors)"))} title="Forearms (Brachioradialis / Extensors)" />
+                          <circle cx="245" cy="195" r="12" fill="rgba(200, 180, 160, 0.6)" stroke="rgba(200, 180, 160, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Forearms (Brachioradialis / Extensors)"))} title="Forearms (Brachioradialis / Extensors)" />
+                          {/* Abs - Center abdomen */}
+                          <circle cx="150" cy="200" r="14" fill="rgba(163, 56, 93, 0.6)" stroke="rgba(163, 56, 93, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Rectus Abdominis (Abs)"))} title="Rectus Abdominis (Abs)" />
+                          {/* Serratus Anterior / Obliques - Sides of torso */}
+                          <circle cx="100" cy="210" r="12" fill="rgba(200, 130, 50, 0.6)" stroke="rgba(200, 130, 50, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Serratus Anterior & External Obliques"))} title="Serratus Anterior & External Obliques" />
+                          <circle cx="200" cy="210" r="12" fill="rgba(200, 130, 50, 0.6)" stroke="rgba(200, 130, 50, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Serratus Anterior & External Obliques"))} title="Serratus Anterior & External Obliques" />
+                          {/* Quadriceps - Front thigh */}
+                          <circle cx="115" cy="290" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Rectus Femoris (Quadriceps)"))} title="Rectus Femoris (Quadriceps)" />
+                          <circle cx="185" cy="290" r="14" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Medialis (Quadriceps)"))} title="Vastus Medialis (Quadriceps)" />
+                          {/* Vastus Lateralis - Outer thigh */}
+                          <circle cx="100" cy="300" r="12" fill="rgba(90, 140, 200, 0.6)" stroke="rgba(90, 140, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Lateralis (Quadriceps)"))} title="Vastus Lateralis (Quadriceps)" />
+                          <circle cx="200" cy="300" r="12" fill="rgba(90, 140, 200, 0.6)" stroke="rgba(90, 140, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Vastus Lateralis (Quadriceps)"))} title="Vastus Lateralis (Quadriceps)" />
+                          {/* Calves - Lower leg */}
+                          <circle cx="130" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
+                          <circle cx="170" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
+                        </svg>
+                      </div>
+                      <div className={`anatomy-img-box ${anatomyView === 'back' ? 'active' : ''}`}>
+                        <img src={backImg} alt="Anatomy Back" className="anatomy-image" />
+                        <svg className="anatomy-overlay" viewBox="0 0 300 400">
+                          {/* Trapezius - Upper back/neck */}
+                          <circle cx="150" cy="85" r="14" fill="rgba(200, 160, 100, 0.6)" stroke="rgba(200, 160, 100, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Trapezius (Upper Back / Neck)"))} title="Trapezius (Upper Back / Neck)" />
+                          {/* Posterior Deltoids - Back shoulders */}
+                          <circle cx="85" cy="95" r="12" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                          <circle cx="215" cy="95" r="12" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Deltoids (Shoulders)"))} title="Deltoids (Shoulders)" />
+                          {/* Triceps - Posterior arm */}
+                          <circle cx="55" cy="145" r="12" fill="rgba(160, 180, 200, 0.6)" stroke="rgba(160, 180, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Triceps Brachii"))} title="Triceps Brachii" />
+                          <circle cx="245" cy="145" r="12" fill="rgba(160, 180, 200, 0.6)" stroke="rgba(160, 180, 200, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Triceps Brachii"))} title="Triceps Brachii" />
+                          {/* Lats - Back middle */}
+                          <circle cx="120" cy="165" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
+                          <circle cx="180" cy="165" r="14" fill="rgba(217, 126, 74, 0.6)" stroke="rgba(217, 126, 74, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Latissimus Dorsi (Lats)"))} title="Latissimus Dorsi (Lats)" />
+                          {/* Erector Spinae (Lower back) - Center lower back */}
+                          <circle cx="150" cy="240" r="14" fill="rgba(163, 56, 93, 0.6)" stroke="rgba(163, 56, 93, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Erector Spinae (Lower Back)"))} title="Erector Spinae (Lower Back)" />
+                          {/* Glutes - Buttocks */}
+                          <circle cx="125" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
+                          <circle cx="175" cy="300" r="14" fill="rgba(108, 91, 147, 0.6)" stroke="rgba(108, 91, 147, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gluteus Maximus & Medius (Glutes)"))} title="Gluteus Maximus & Medius (Glutes)" />
+                          {/* Hamstrings - Back thigh */}
+                          <circle cx="125" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
+                          <circle cx="175" cy="280" r="12" fill="rgba(74, 123, 176, 0.6)" stroke="rgba(74, 123, 176, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Hamstrings (Biceps Femoris)"))} title="Hamstrings (Biceps Femoris)" />
+                          {/* Calves - Back lower leg */}
+                          <circle cx="130" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
+                          <circle cx="170" cy="360" r="12" fill="rgba(127, 184, 71, 0.6)" stroke="rgba(127, 184, 71, 1)" strokeWidth="2" cursor="pointer" onClick={() => setSelectedMuscle(colorMap.find(m => m["muscle name"] === "Gastrocnemius & Soleus (Calves)"))} title="Gastrocnemius & Soleus (Calves)" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -772,6 +786,7 @@ export default function Dashboard({ theme, toggleTheme }) {
           {activeTab === 'Metrics' && (
             <ScheduleView />
           )}
+          </div>
         </div>
 
         <WearableModal isOpen={isWearableModalOpen} onClose={() => setIsWearableModalOpen(false)} onConnected={handleWearableConnected} />

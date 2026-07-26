@@ -25,28 +25,28 @@ The chatbot understands user intent across multiple languages (English, French, 
 
 ### Frontend (React + Vite)
 
-| Technology | Purpose |
-|---|---|
-| **React 19** | Dynamic UI components |
-| **Vite 8** | Ultra-fast build & development |
-| **React Router DOM 7** | SPA navigation & routing |
-| **Chart.js + react-chartjs-2** | Dashboard charts and graphs |
-| **React Markdown** | Rendered LLM responses |
-| **Phosphor Icons** | Iconography throughout the app |
-| **Mapbox GL** | Interactive location maps |
+| Technology                           | Purpose                        |
+| ------------------------------------ | ------------------------------ |
+| **React 19**                   | Dynamic UI components          |
+| **Vite 8**                     | Ultra-fast build & development |
+| **React Router DOM 7**         | SPA navigation & routing       |
+| **Chart.js + react-chartjs-2** | Dashboard charts and graphs    |
+| **React Markdown**             | Rendered LLM responses         |
+| **Phosphor Icons**             | Iconography throughout the app |
+| **Mapbox GL**                  | Interactive location maps      |
 
 ### Backend (FastAPI + Python)
 
-| Technology | Purpose |
-|---|---|
-| **FastAPI** | Async REST API framework |
-| **Uvicorn** | ASGI server |
-| **Motor + PyMongo** | Async MongoDB driver |
-| **Google Generative AI (Gemini)** | LLM for the chatbot |
-| **ChromaDB** | Vector database for RAG |
-| **Pydantic** | Data validation & schemas |
-| **python-jose + passlib** | JWT tokens + bcrypt hashing |
-| **pytest** | Unit & integration testing |
+| Technology                              | Purpose                     |
+| --------------------------------------- | --------------------------- |
+| **FastAPI**                       | Async REST API framework    |
+| **Uvicorn**                       | ASGI server                 |
+| **Motor + PyMongo**               | Async MongoDB driver        |
+| **Google Generative AI (Gemini)** | LLM for the chatbot         |
+| **ChromaDB**                      | Vector database for RAG     |
+| **Pydantic**                      | Data validation & schemas   |
+| **python-jose + passlib**         | JWT tokens + bcrypt hashing |
+| **pytest**                        | Unit & integration testing  |
 
 ### Database
 
@@ -58,21 +58,25 @@ The chatbot understands user intent across multiple languages (English, French, 
 ## 🔄 Recent Updates
 
 ### Branding Update (Logo Implementation)
+
 - Replaced the text-based 'A' logo placeholder in both the **Navbar** and **Footer** with the actual `logoelet.png` image
 - Logo is resized appropriately: 32×32px in the navbar, 28×28px in the footer
 - Favicon updated to use `/logoelet.png` for browser tab branding
 
 ### Navigation & Footer Improvements
+
 - Added **social media icons** (Instagram, Facebook, Twitter) to the footer using the Phosphor Icons library
 - Social icons feature hover effects with the brand's signature lime green color
 - Footer logo now matches the navbar branding for visual consistency
 
 ### Sidebar Persistence (localStorage)
+
 - Sidebar open/closed state is saved to `localStorage` under the key `sidebarOpen`
 - State persists across page refreshes and browser sessions
 - Implemented using React's `useState` with a lazy initializer reading from `localStorage`
 
 ### Other Improvements
+
 - Fully responsive design with mobile drawer navigation
 - Dark/light theme toggle with `localStorage` persistence
 - Docker Compose setup for easy deployment
@@ -176,19 +180,21 @@ pytest test/
 Never commit real API keys to Git. Use `.env.example` files as templates:
 
 ### Backend (`backend/.env`)
-| Variable | Description |
-|---|---|
-| `MONGO_URL` | MongoDB connection URI |
-| `GEMINI_API_KEY` | Google Gemini API key |
-| `JWT_SECRET` | Secret for signing JWT tokens |
-| `STRAVA_CLIENT_ID` | Strava OAuth client ID |
-| `FITBIT_CLIENT_ID` | Fitbit OAuth client ID |
+
+| Variable             | Description                   |
+| -------------------- | ----------------------------- |
+| `MONGO_URL`        | MongoDB connection URI        |
+| `GEMINI_API_KEY`   | Google Gemini API key         |
+| `JWT_SECRET`       | Secret for signing JWT tokens |
+| `STRAVA_CLIENT_ID` | Strava OAuth client ID        |
+| `FITBIT_CLIENT_ID` | Fitbit OAuth client ID        |
 
 ### Frontend (`interface/.env`)
-| Variable | Description |
-|---|---|
-| `VITE_API_BASE_URL` | Backend API URL |
-| `VITE_BOXMAP` | Mapbox access token |
+
+| Variable              | Description         |
+| --------------------- | ------------------- |
+| `VITE_API_BASE_URL` | Backend API URL     |
+| `VITE_BOXMAP`       | Mapbox access token |
 
 > **Best Practice:** Always add `.env` files to `.gitignore` before pushing. The `.env.example` files serve as templates showing which variables are needed without exposing real secrets.
 

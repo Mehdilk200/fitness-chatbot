@@ -29,11 +29,11 @@ export default function Sidebar({ userEmail, initials }) {
       </div>
 
       <nav className="sidebar-nav">
-        <Link to="/chat" className={`nav-item ${isActive('/chat') ? 'active' : ''}`}>
+        <Link to="/chat?new=1" className={`nav-item ${isActive('/chat') ? 'active' : ''}`}>
           <span className="ni"><i className="ph ph-chat-circle-text"></i></span>
           <span className="nav-text">Chat</span>
         </Link>
-        <Link to="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}>
+        <Link to="/dashboard?tab=Workouts" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}>
           <span className="ni"><i className="ph ph-chart-bar"></i></span>
           <span className="nav-text">Dashboard</span>
         </Link>

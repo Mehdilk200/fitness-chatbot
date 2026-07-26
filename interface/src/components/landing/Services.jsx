@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export default function Services() {
@@ -33,7 +34,7 @@ export default function Services() {
         </div>
       </div>
       <div style={{ textAlign: "center", marginTop: "48px" }}>
-        <button className="hero-btn">{t('services.cta')}</button>
+        <Link to="/auth" className="hero-btn">{t('services.cta')}</Link>
       </div>
     </section>
   );

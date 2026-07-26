@@ -29,7 +29,7 @@ export default function Navbar({ theme, toggleTheme }) {
             <li><a href="#pricing" onClick={closeDrawer}>{t('nav.pricing')}</a></li>
             <li><a href="#contact" onClick={closeDrawer}>{t('nav.contact')}</a></li>
           </ul>
-          <Link to="/auth?mode=register" className="drawer-cta" onClick={closeDrawer}>{t('common:getStarted')}</Link>
+          <Link to="/auth" className="drawer-cta" onClick={closeDrawer}>{t('common:getStarted')}</Link>
         </div>
       </div>
       <nav className="landing-nav">
@@ -48,7 +48,7 @@ export default function Navbar({ theme, toggleTheme }) {
         <div className="nav-right">
           <LanguageSwitcher />
           <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-          <Link to="/auth?mode=register" className="nav-cta">{t('common:getStarted')}</Link>
+          <Link to="/auth" className="nav-cta">{t('common:getStarted')}</Link>
           <button className={`nav-hamburger ${drawerOpen ? 'open' : ''}`} onClick={toggleDrawer}>
             <span></span><span></span><span></span>
           </button>

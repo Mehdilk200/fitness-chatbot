@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '../services/api';
+import authBg from '../assets/background.jpg';
 
 export default function Auth() {
   const { t } = useTranslation('auth');
@@ -9,6 +10,9 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [showPassReg, setShowPassReg] = useState(false);
+  const [showPassReg2, setShowPassReg2] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,7 +76,7 @@ export default function Auth() {
 
   return (
     <div className="auth-page">
-      <div className="branding-side">
+      <div className="branding-side" style={{ backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.85) 100%), url(${authBg})` }}>
         <Link to="/" className="auth-logo">{t('common:appNameShort')}<span>{t('common:appNameSpan')}</span></Link>
         <div className="auth-bg-text">FIT</div>
         <div className="auth-quote">
@@ -80,9 +84,9 @@ export default function Auth() {
           <h2>{t('authTitle')}</h2>
           <p>{t('authDesc')}</p>
           <div className="auth-stats">
-            <div className="a-stat"><span>700+</span>{t('statExercises')}</div>
-            <div className="a-stat"><span>100%</span>{t('statFree')}</div>
-            <div className="a-stat"><span>AI</span>{t('statAi')}</div>
+            <div className="a-stat"><span>Programme personnalisé</span>adapté à ton niveau</div>
+            <div className="a-stat"><span>Suivi quotidien</span>vois tes progrès chaque jour</div>
+            <div className="a-stat"><span>100% Gratuit</span>commence sans rien payer</div>
           </div>
         </div>
       </div>
@@ -107,7 +111,12 @@ export default function Auth() {
             </div>
             <div className="field">
               <label>{t('passwordLabel')}</label>
-              <input type="password" name="login-pass" placeholder={t('passwordPlaceholder')} required />
+              <div className="password-wrap">
+                <input type={showPass ? 'text' : 'password'} name="login-pass" placeholder={t('passwordPlaceholder')} required />
+                <button type="button" className="pass-toggle" onClick={() => setShowPass(!showPass)} tabIndex={-1}>
+                  <i className={`ph ${showPass ? 'ph-eye-slash' : 'ph-eye'}`}></i>
+                </button>
+              </div>
             </div>
             {error && <div className="form-error">{error}</div>}
             <button type="submit" className="btn-primary" disabled={loading}>
@@ -132,11 +141,21 @@ export default function Auth() {
             </div>
             <div className="field">
               <label>{t('passwordLabel')}</label>
-              <input type="password" name="reg-pass" placeholder={t('passwordPlaceholder')} minLength="6" required />
+              <div className="password-wrap">
+                <input type={showPassReg ? 'text' : 'password'} name="reg-pass" placeholder={t('passwordPlaceholder')} minLength="6" required />
+                <button type="button" className="pass-toggle" onClick={() => setShowPassReg(!showPassReg)} tabIndex={-1}>
+                  <i className={`ph ${showPassReg ? 'ph-eye-slash' : 'ph-eye'}`}></i>
+                </button>
+              </div>
             </div>
             <div className="field">
               <label>{t('confirmPasswordLabel')}</label>
-              <input type="password" name="reg-pass2" placeholder={t('confirmPasswordPlaceholder')} required />
+              <div className="password-wrap">
+                <input type={showPassReg2 ? 'text' : 'password'} name="reg-pass2" placeholder={t('confirmPasswordPlaceholder')} required />
+                <button type="button" className="pass-toggle" onClick={() => setShowPassReg2(!showPassReg2)} tabIndex={-1}>
+                  <i className={`ph ${showPassReg2 ? 'ph-eye-slash' : 'ph-eye'}`}></i>
+                </button>
+              </div>
             </div>
             {error && <div className="form-error">{error}</div>}
             <button type="submit" className="btn-primary" disabled={loading}>

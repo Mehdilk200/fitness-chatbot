@@ -1,16 +1,10 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import ConnectModal from './ConnectModal';
 
 export default function HealthDashboard() {
   const { t } = useTranslation('landing');
-  const [modalOpen, setModalOpen] = useState(false);
 
   const adjustTimer = (delta) => { console.log('Timer adjusted by', delta); };
   const toggleTimer = () => { console.log('Timer toggled'); };
-  const openModal = () => setModalOpen(true);
-  const closeModal = () => setModalOpen(false);
-  const startScan = () => { console.log('Device scan started'); };
 
   return (
     <section id="health-dashboard" className="landing-section">
@@ -22,7 +16,7 @@ export default function HealthDashboard() {
         <div className="hd-activity-card">
           <div className="hd-activity-item">
             <div className="hd-act-left">
-              <div className="hd-act-icon walk"><i className="ph ph-footprints-fill"></i></div>
+              <div className="hd-act-icon walk"><i className="ph ph-footprints"></i></div>
               <div>
                 <div className="hd-act-name">{t('healthDashboard.outdoorWalk')}</div>
                 <div className="hd-act-val">0.57<span style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)" }}>MI</span></div>
@@ -32,7 +26,7 @@ export default function HealthDashboard() {
           </div>
           <div className="hd-activity-item">
             <div className="hd-act-left">
-              <div className="hd-act-icon cycle"><i className="ph ph-bicycle-fill"></i></div>
+              <div className="hd-act-icon cycle"><i className="ph ph-bicycle"></i></div>
               <div>
                 <div className="hd-act-name">{t('healthDashboard.cycling')}</div>
                 <div className="hd-act-val">5.51<span style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)" }}>KM</span></div>
@@ -42,7 +36,7 @@ export default function HealthDashboard() {
           </div>
           <div className="hd-activity-item">
             <div className="hd-act-left">
-              <div className="hd-act-icon cardio"><i className="ph ph-heartbeat-fill"></i></div>
+              <div className="hd-act-icon cardio"><i className="ph ph-heartbeat"></i></div>
               <div>
                 <div className="hd-act-name">{t('healthDashboard.cardio')}</div>
                 <div className="hd-act-val">0.69<span style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)" }}>MI</span></div>
@@ -118,66 +112,6 @@ export default function HealthDashboard() {
         </div>
       </div>
 
-      <div className="hd-heart-section">
-        <h3>{t('healthDashboard.heartTitle')}</h3>
-        <p>{t('healthDashboard.heartDesc')}</p>
-        <div className="hd-bpm">
-          <span className="hd-bpm-num" id="bpmDisplay">129</span>
-          <span className="hd-heart-icon"><i className="ph ph-heart-fill"></i></span>
-        </div>
-
-        <div className="hd-connect">
-          <div className="hd-connect-device" id="watchBtn" onClick={openModal}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="7" y="2" width="10" height="20" rx="3" />
-              <path d="M7 7h10M7 17h10" />
-              <circle cx="12" cy="12" r="2" />
-            </svg>
-            <div>
-              <div>{t('healthDashboard.appleWatch')}</div>
-              <div className="hd-connect-status"><span className="status-dot"></span> {t('common:connected')}</div>
-            </div>
-          </div>
-          <div className="hd-connect-or">or</div>
-          <div className="hd-connect-device" id="phoneBtn" onClick={openModal}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="5" y="2" width="14" height="20" rx="3" />
-              <circle cx="12" cy="17" r="1" />
-            </svg>
-            <div>
-              <div>{t('healthDashboard.smartphone')}</div>
-              <div className="hd-connect-status"><span className="status-dot"></span> {t('common:connected')}</div>
-            </div>
-          </div>
-          <div className="hd-connect-or">or</div>
-          <div className="hd-connect-device" id="garminBtn" onClick={openModal}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 3" />
-            </svg>
-            <div>
-              <div>{t('healthDashboard.garmin')}</div>
-              <div className="hd-connect-status"><span className="status-dot"></span> {t('common:connected')}</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="hd-live-data" id="liveDataWidget">
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "16px" }}>{t('healthDashboard.liveHealthData')}</div>
-          <div className="hd-live-grid">
-            <div className="hd-live-metric"><div className="val" id="liveBpm">--</div><div className="lbl">{t('healthDashboard.bpm')}</div></div>
-            <div className="hd-live-metric"><div className="val" id="liveSteps">--</div><div className="lbl">{t('healthDashboard.steps')}</div></div>
-            <div className="hd-live-metric"><div className="val" id="liveCal">--</div><div className="lbl">{t('healthDashboard.calories')}</div></div>
-            <div className="hd-live-metric"><div className="val" id="liveMin">--</div><div className="lbl">{t('healthDashboard.activeMin')}</div></div>
-          </div>
-          <div className="hd-webhook-status">
-            <div className="hd-webhook-dot"></div>
-            <span>{t('healthDashboard.liveSync')}</span>
-          </div>
-        </div>
-      </div>
-
-      <ConnectModal isOpen={modalOpen} onClose={closeModal} onScan={startScan} />
     </section>
   );
 }

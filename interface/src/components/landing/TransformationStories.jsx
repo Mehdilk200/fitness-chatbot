@@ -94,7 +94,7 @@ export default function TransformationStories() {
           </div>
         </div>
         <div className="ts-nav">
-          <button className="ts-nav-btn prev2" onClick={() => tsSlide2(-1)}>{t('common:previous')}</button>
+          <button className="ts-nav-btn prev2" onClick={() => tsSlide2(-1)} aria-label={t('common:previous')}><i className="ph ph-arrow-left"></i></button>
           <button className="ts-nav-btn next2" onClick={() => tsSlide2(1)}><i className="ph ph-arrow-right"></i></button>
         </div>
       </div>

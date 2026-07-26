@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export default function CtaSection() {
@@ -11,7 +12,7 @@ export default function CtaSection() {
       </div>
       <div className="cta-right">
         <p>{t('cta.description')}</p>
-        <button className="cta-btn">{t('cta.cta')} <i className="ph ph-arrow-right"></i></button>
+        <Link to="/auth" className="cta-btn">{t('cta.cta')} <i className="ph ph-arrow-right"></i></Link>
       </div>
     </section>
   );

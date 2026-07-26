@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export default function Features() {
@@ -43,7 +44,7 @@ export default function Features() {
         </div>
       </div>
       <div style={{ textAlign: "center", marginTop: "48px" }}>
-        <button className="hero-btn">{t('features.cta')}</button>
+        <Link to="/auth" className="hero-btn">{t('features.cta')}</Link>
       </div>
     </section>
   );

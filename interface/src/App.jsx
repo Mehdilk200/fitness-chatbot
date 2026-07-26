@@ -29,7 +29,7 @@ function App() {
           <Route path="/" element={<Home theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<ProtectedRoute requireProfile={false}><Onboarding theme={theme} toggleTheme={toggleTheme} /></ProtectedRoute>} />
-          <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route element={<ProtectedRoute><AppLayout theme={theme} toggleTheme={toggleTheme} /></ProtectedRoute>}>
             <Route path="/chat" element={<Chat theme={theme} toggleTheme={toggleTheme} />} />
             <Route path="/dashboard" element={<Dashboard theme={theme} toggleTheme={toggleTheme} />} />
             <Route path="/profile" element={<Profile theme={theme} toggleTheme={toggleTheme} />} />

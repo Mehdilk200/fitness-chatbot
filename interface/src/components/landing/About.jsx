@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export default function About() {
@@ -9,7 +10,7 @@ export default function About() {
         <div className="section-label">{t('about.label')}</div>
         <h2>{t('about.title')}</h2>
         <p>{t('about.description')}</p>
-        <button className="hero-btn">{t('about.cta')}</button>
+        <Link to="/auth" className="hero-btn">{t('about.cta')}</Link>
       </div>
       <div className="about-imgs">
         <div className="about-img-main">

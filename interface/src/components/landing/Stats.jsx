@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
@@ -78,7 +79,7 @@ export default function Stats() {
           <div className="stat-box"><div className="num">300<span>+</span></div><div className="lbl">{t('stats.statPlans')}</div></div>
         </div>
         <p className="stats-desc" style={{ marginTop: "32px" }}>{t('stats.description')}</p>
-        <button className="hero-btn">{t('stats.cta')}</button>
+        <Link to="/auth" className="hero-btn">{t('stats.cta')}</Link>
       </div>
     </section>
   );

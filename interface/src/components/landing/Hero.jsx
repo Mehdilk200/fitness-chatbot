@@ -18,7 +18,7 @@ export default function Hero() {
       <div className="hero-content">
         <h1 className="hero-title">{t('hero.title')}</h1>
         <p className="hero-sub">{t('hero.subtitle')}</p>
-        <Link to="/auth?mode=register" className="hero-btn">{t('hero.cta')}</Link>
+        <Link to="/auth" className="hero-btn">{t('hero.cta')}</Link>
       </div>
     </section>
   );

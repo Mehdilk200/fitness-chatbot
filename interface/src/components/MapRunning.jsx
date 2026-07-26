@@ -12,6 +12,8 @@ const containerStyle = {
   boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
 };
 
+const containerClass = 'mapbox-running-container';
+
 const defaultCenter = { longitude: -7.6233, latitude: 33.5469 };
 
 const route = [
@@ -169,7 +171,7 @@ export default function MapRunning({ accessToken }) {
   }
 
   return (
-    <div style={containerStyle}>
+    <div className={containerClass} style={containerStyle}>
       {/* Search bar with suggestions */}
       <div style={searchContainerStyle} ref={searchRef}>
         <div style={{
@@ -276,7 +278,7 @@ export default function MapRunning({ accessToken }) {
       </div>
 
       {/* Zoom + Fullscreen controls */}
-      <div style={{
+      <div className="map-zoom-controls" style={{
         position: 'absolute',
         right: '16px',
         top: '50%',

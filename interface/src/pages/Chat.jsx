@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi, chatApi } from '../services/api';
-import ThemeToggle from '../components/ThemeToggle';
 import ReactMarkdown from 'react-markdown';
 import Fuse from 'fuse.js';
 import logoImg from '../assets/logoelet.png';
@@ -84,6 +83,10 @@ export default function Chat({ theme, toggleTheme }) {
         const historyData = await chatApi.getHistory();
         if (historyData && historyData.sessions) {
           setSessions(historyData.sessions);
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('new') === '1') {
+            return;
+          }
           if (historyData.sessions.length > 0) {
             setSessionId(historyData.sessions[0]._id);
             setMessages(historyData.sessions[0].messages || []);
@@ -119,6 +122,15 @@ export default function Chat({ theme, toggleTheme }) {
       const historyData = await chatApi.getHistory();
       setSessions(historyData?.sessions || []);
     } catch(e){}
+  };
+
+  const initials = userEmail?.charAt(0).toUpperCase() || '?';
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('is_profile_complete');
+    navigate('/auth');
   };
 
   const handleNewChat = () => {
@@ -196,6 +208,7 @@ export default function Chat({ theme, toggleTheme }) {
 
     const finalText = messageText || (uploadedUrls.length > 0 ? "Analyse cette image." : '');
 
+    setLoading(true);
     try {
       const data = await chatApi.sendMessage(finalText, sessionId, uploadedUrls.length > 0 ? uploadedUrls : null);
       setSessionId(data.session_id);
@@ -230,11 +243,12 @@ export default function Chat({ theme, toggleTheme }) {
 
   return (
     <>
+      <div className={`discussions-backdrop ${historyOpen ? 'active' : ''}`} onClick={() => setHistoryOpen(false)}></div>
       <aside className={`discussions-sidebar ${historyOpen ? 'open' : ''}`}>
-        <div className="discussions-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-muted)' }}>{t('discussions')}</span>
-          <button onClick={handleNewChat} title={t('newChat')} style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-            <i className="ph ph-plus-circle" style={{ fontSize: '20px' }}></i>
+        <div className="discussions-header">
+          <span>{t('discussions')}</span>
+          <button className="discussions-new-btn" onClick={handleNewChat} title={t('newChat')}>
+            <i className="ph ph-plus"></i>
           </button>
         </div>
         <div className="discussions-search">
@@ -286,6 +300,19 @@ export default function Chat({ theme, toggleTheme }) {
             );
           })}
         </div>
+        <div className="discussions-footer">
+          <div className="discussions-user-info">
+            <div className="discussions-user-avatar">{initials}</div>
+            <div className="discussions-user-details">
+              <span>{userEmail || 'Chargement...'}</span>
+              <span className="discussions-user-plan">Plan Gratuit</span>
+            </div>
+          </div>
+          <button className="discussions-logout" onClick={handleLogout}>
+            <i className="ph ph-sign-out"></i>
+            <span>Déconnexion</span>
+          </button>
+        </div>
       </aside>
 
       <main className={`chat-main ${historyOpen ? 'discussions-open' : ''}`}>
@@ -298,7 +325,12 @@ export default function Chat({ theme, toggleTheme }) {
             <div className="chat-status-text">{t('historyEnabled', 'Historique activé')} : {historyOpen ? t('yes', 'Oui') : t('no', 'Non')}</div>
           </div>
           <div className="topbar-actions">
-            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+            <button className="topbar-btn history-icon" onClick={toggleHistory} title="Historique">
+              <i className="ph ph-clock-counter-clockwise"></i>
+            </button>
+            <button className="topbar-btn new-chat-icon" onClick={handleNewChat} title="Nouvelle discussion">
+              <i className="ph ph-plus"></i>
+            </button>
           </div>
         </div>
 
@@ -348,7 +380,7 @@ export default function Chat({ theme, toggleTheme }) {
                   </div>
                 </div>
               ))}
-              {loading && <div className="msg assistant"><div className="msg-avatar">AI</div><div className="msg-typing"><div className="dot"></div><div className="dot"></div><div className="dot"></div></div></div>}
+              {loading && <div className="msg assistant"><div className="msg-avatar">AI</div><div className="msg-bubble typing-indicator"><span></span><span></span><span></span></div></div>}
               <div ref={messagesEndRef} />
             </div>
           )}

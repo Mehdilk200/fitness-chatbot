@@ -21,28 +21,37 @@ const handleResponse = async (res) => {
   return res.json();
 };
 
+const apiFetch = async (url, options = {}) => {
+  try {
+    const res = await fetch(url, options);
+    return handleResponse(res);
+  } catch (err) {
+    if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      throw new Error('Unable to connect to server. Please check your connection and try again.');
+    }
+    throw err;
+  }
+};
+
 export const authApi = {
   login: async (email, password) => {
-    const res = await fetch(`${BASE_URL}/auth/login`, {
+    return apiFetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    return handleResponse(res);
   },
   register: async (email, password, first_name = '', last_name = '') => {
-    const res = await fetch(`${BASE_URL}/auth/register`, {
+    return apiFetch(`${BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, first_name, last_name }),
     });
-    return handleResponse(res);
   },
   getMe: async () => {
-    const res = await fetch(`${BASE_URL}/auth/me`, {
+    return apiFetch(`${BASE_URL}/auth/me`, {
       headers: getHeaders(),
     });
-    return handleResponse(res);
   }
 };
 

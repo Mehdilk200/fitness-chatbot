@@ -52,6 +52,12 @@ export const authApi = {
     return apiFetch(`${BASE_URL}/auth/me`, {
       headers: getHeaders(),
     });
+  },
+  deleteAccount: async () => {
+    return apiFetch(`${BASE_URL}/auth/account`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
   }
 };
 

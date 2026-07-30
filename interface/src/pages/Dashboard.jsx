@@ -107,8 +107,8 @@ export default function Dashboard({ theme, toggleTheme }) {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && tab !== activeTab) setActiveTab(tab);
-  }, [searchParams, activeTab]);
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
 
   const handleWearableConnected = () => {
     wearableApi.getStatus().then(res => {
@@ -344,7 +344,7 @@ export default function Dashboard({ theme, toggleTheme }) {
                 <button 
                   key={tab} 
                   className={`nav-pill ${activeTab === tab ? 'active' : ''}`}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => navigate('/dashboard?tab=' + tab)}
                 >
                   {tab}
                 </button>

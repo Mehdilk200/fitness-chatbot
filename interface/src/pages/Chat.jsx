@@ -300,19 +300,6 @@ export default function Chat({ theme, toggleTheme }) {
             );
           })}
         </div>
-        <div className="discussions-footer">
-          <div className="discussions-user-info">
-            <div className="discussions-user-avatar">{initials}</div>
-            <div className="discussions-user-details">
-              <span>{userEmail || 'Chargement...'}</span>
-              <span className="discussions-user-plan">Plan Gratuit</span>
-            </div>
-          </div>
-          <button className="discussions-logout" onClick={handleLogout}>
-            <i className="ph ph-sign-out"></i>
-            <span>Déconnexion</span>
-          </button>
-        </div>
       </aside>
 
       <main className={`chat-main ${historyOpen ? 'discussions-open' : ''}`}>
@@ -323,14 +310,6 @@ export default function Chat({ theme, toggleTheme }) {
           <div className="topbar-info" style={{ flex: 1, textAlign: 'center' }}>
             <div className="bot-status" style={{ justifyContent: 'center' }}><span className="status-dot"></span>FitBot · En ligne</div>
             <div className="chat-status-text">{t('historyEnabled', 'Historique activé')} : {historyOpen ? t('yes', 'Oui') : t('no', 'Non')}</div>
-          </div>
-          <div className="topbar-actions">
-            <button className="topbar-btn history-icon" onClick={toggleHistory} title="Historique">
-              <i className="ph ph-clock-counter-clockwise"></i>
-            </button>
-            <button className="topbar-btn new-chat-icon" onClick={handleNewChat} title="Nouvelle discussion">
-              <i className="ph ph-plus"></i>
-            </button>
           </div>
         </div>
 

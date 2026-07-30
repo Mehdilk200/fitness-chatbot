@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 import bcrypt
 from models.schemas import RegisterRequest, LoginRequest, TokenResponse
-from routes.crud import create_user, get_user_by_email, get_user_by_id, get_profile
+from routes.crud import create_user, get_user_by_email, get_user_by_id, get_profile, delete_user, delete_user_profile
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -108,3 +108,11 @@ async def oauth_login(provider: str):
         status_code=501,
         detail=f"{provider.title()} OAuth not yet configured. Set up your {provider} credentials in the backend .env file."
     )
+
+
+@router.delete("/account")
+async def delete_account(current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    await delete_user_profile(user_id)
+    await delete_user(user_id)
+    return {"message": "Account deleted successfully"}

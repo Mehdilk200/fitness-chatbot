@@ -60,6 +60,18 @@ async def get_profile(user_id: str) -> Optional[dict]:
     return doc
 
 
+async def delete_user(user_id: str) -> bool:
+    db = get_db()
+    result = await db.users.delete_one({"_id": ObjectId(user_id)})
+    return result.deleted_count > 0
+
+
+async def delete_user_profile(user_id: str) -> bool:
+    db = get_db()
+    result = await db.user_profiles.delete_one({"user_id": user_id})
+    return result.deleted_count > 0
+
+
 
 
 async def create_session(user_id: str, title: str = "Nouvelle discussion") -> str:

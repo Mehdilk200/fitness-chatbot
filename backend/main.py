@@ -52,7 +52,7 @@ app = FastAPI(
 )
 
 origins = [
-    "https://elitefitbot.netlify.app",
+    "https://elitefitbot.netlify.app/api",
     "http://localhost:5173",
     "http://localhost:2332",
     "http://127.0.0.1:5500",

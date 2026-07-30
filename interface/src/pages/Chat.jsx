@@ -28,6 +28,7 @@ export default function Chat({ theme, toggleTheme }) {
   const [welcomeGreeting, setWelcomeGreeting] = useState('');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
   const navigate = useNavigate();
 
   const imageCountInConversation = useMemo(() => {
@@ -184,7 +185,7 @@ export default function Chat({ theme, toggleTheme }) {
   );
 
   const handleSendMessage = async (text) => {
-    const messageText = text || input;
+    const messageText = text || textareaRef.current?.value || input;
     if ((!messageText.trim() && selectedFiles.length === 0) || loading) return;
 
     let uploadedUrls = [];
@@ -205,6 +206,7 @@ export default function Chat({ theme, toggleTheme }) {
     setMessages(prev => [...prev, newUserMessage]);
     setInput('');
     setSelectedFiles([]);
+    textareaRef.current?.blur();
 
     const finalText = messageText || (uploadedUrls.length > 0 ? "Analyse cette image." : '');
 
@@ -239,6 +241,12 @@ export default function Chat({ theme, toggleTheme }) {
 
   const removeFile = (index) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleTextareaInput = (e) => {
+    const el = e.target;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 150)}px`;
   };
 
   return (
@@ -386,6 +394,8 @@ export default function Chat({ theme, toggleTheme }) {
               </button>
               <textarea
                 id="chat-input"
+                ref={textareaRef}
+                onInput={handleTextareaInput}
                 placeholder={`Ask ${userName || 'FitBot'}, how can I help you reach your goals today?`}
                 rows="1"
                 value={input}

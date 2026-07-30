@@ -1,4 +1,6 @@
 import os
+import asyncio
+import httpx
 from google import genai
 from google.genai import types
 from typing import Optional
@@ -12,6 +14,9 @@ if API_KEY:
 else:
     print("WARNING: GEMINI_API_KEY is not set.")
 
+_BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_UPLOADS_DIR = os.path.join(_BACKEND_DIR, "uploads")
+
 _MIME_MAP = {
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
@@ -20,9 +25,53 @@ _MIME_MAP = {
     '.webp': 'image/webp',
 }
 
+
 def _infer_mime_type(url: str) -> str:
     ext = os.path.splitext(url.split('?')[0])[1].lower()
     return _MIME_MAP.get(ext, 'image/jpeg')
+
+
+async def _resolve_image_part(url: str) -> types.Part:
+    """Resolve an image URL to a Part.
+
+    Gemini's from_uri() only supports gs:// URIs and File API URIs, NOT
+    arbitrary HTTP URLs.  For HTTP(S) URLs we download the bytes and
+    send them as inline_data so the model actually receives the image.
+    """
+    mime = _infer_mime_type(url)
+
+    # 1. HTTP/HTTPS — download and convert to inline bytes
+    if url.startswith(('http://', 'https://')):
+        print(f"[Image] Downloading remote image: {url}")
+        try:
+            async with httpx.AsyncClient() as hc:
+                resp = await hc.get(url, timeout=30)
+                resp.raise_for_status()
+            data = resp.content
+            print(f"[Image] Downloaded {len(data)} bytes, mime={mime}")
+            return types.Part(inline_data=types.Blob(mime_type=mime, data=data))
+        except Exception as e:
+            print(f"[Image] ERROR downloading {url}: {e}")
+            raise
+
+    # 2. Local filesystem path (/uploads/…)
+    local_path = url
+    if url.startswith('/uploads/'):
+        filename = url.lstrip('/uploads/')
+        local_path = os.path.join(_UPLOADS_DIR, filename)
+    elif not os.path.isabs(url):
+        local_path = os.path.join(_UPLOADS_DIR, url.lstrip('/'))
+
+    print(f"[Image] Local path resolved: {local_path}")
+    if os.path.exists(local_path):
+        with open(local_path, 'rb') as f:
+            data = f.read()
+        print(f"[Image] Read {len(data)} bytes, mime={mime}")
+        return types.Part(inline_data=types.Blob(mime_type=mime, data=data))
+
+    # 3. Fallback — unknown scheme (gs:// etc.), let Gemini try from_uri
+    print(f"[Image] Using from_uri for: {url}")
+    return types.Part.from_uri(mime_type=mime, uri=url)
 
 
 async def generate_response(prompt: str, system_instruction: str = None) -> str:
@@ -46,16 +95,14 @@ async def generate_response(prompt: str, system_instruction: str = None) -> str:
         return "Une erreur interne s'est produite lors de la génération de la réponse."
 
 
-def _build_parts(text: str = "", image_urls: Optional[list] = None) -> list:
+async def _build_parts(text: str = "", image_urls: Optional[list] = None) -> list:
     """Build a list of Part objects from text and image URLs."""
     parts = []
     if text:
         parts.append(types.Part.from_text(text))
     for url in (image_urls or []):
-        parts.append(types.Part.from_uri(
-            mime_type=_infer_mime_type(url),
-            uri=url,
-        ))
+        part = await _resolve_image_part(url)
+        parts.append(part)
     return parts
 
 
@@ -84,12 +131,12 @@ async def generate_multimodal_response(
             img_urls = msg.get("image_urls") or (
                 [msg["image_url"]] if msg.get("image_url") else None
             )
-            parts = _build_parts(text=msg.get("content", ""), image_urls=img_urls)
+            parts = await _build_parts(text=msg.get("content", ""), image_urls=img_urls)
             if parts:
                 contents.append(types.Content(role=role, parts=parts))
 
         # Append the current user message
-        current_parts = _build_parts(text=current_text, image_urls=current_image_urls)
+        current_parts = await _build_parts(text=current_text, image_urls=current_image_urls)
         if current_parts:
             contents.append(types.Content(role="user", parts=current_parts))
         elif current_text:
@@ -100,14 +147,48 @@ async def generate_multimodal_response(
 
         config = types.GenerateContentConfig(system_instruction=system_instruction)
 
-        response = await client.models.generate_content(
-            model=_model_name,
-            contents=contents,
-            config=config,
-        )
-        return response.text
+        # ── Debug: verify every content part before sending to Gemini ──
+        for i, content in enumerate(contents):
+            print(f"[Gemini] Content #{i}: role={content.role}")
+            for j, part in enumerate(content.parts):
+                if hasattr(part, "inline_data") and part.inline_data:
+                    blob = part.inline_data
+                    print(f"  Part #{j}: IMAGE ATTACHED — {blob.mime_type} {len(blob.data)} bytes")
+                elif hasattr(part, "text") and part.text:
+                    print(f"  Part #{j}: text={part.text[:80]}…")
+                elif hasattr(part, "file_data") and part.file_data:
+                    print(f"  Part #{j}: file_data uri={part.file_data.file_uri}")
+                else:
+                    print(f"  Part #{j}: unknown shape — {type(part).__name__}")
+
+        # ── Call Gemini with retry on 503 ──
+        last_error = None
+        for attempt in range(3):
+            try:
+                response = await client.models.generate_content(
+                    model=_model_name,
+                    contents=contents,
+                    config=config,
+                )
+                print(f"[Gemini] Response received: {len(response.text)} chars")
+                return response.text
+            except Exception as e:
+                error_str = str(e)
+                last_error = e
+                print(f"[Gemini] Attempt {attempt + 1}/3 failed: {error_str[:200]}")
+                if "503" in error_str or "UNAVAILABLE" in error_str:
+                    wait = 2 ** attempt
+                    print(f"[Gemini] 503 — retrying in {wait}s…")
+                    await asyncio.sleep(wait)
+                    continue
+                raise
+
+        print(f"[Gemini] All 3 attempts exhausted, last error: {last_error}")
+        raise last_error
     except Exception as e:
-        print(f"[LLM MultiModal Error] model={_model_name} key_set={bool(API_KEY)} history_len={len(history)} images={current_image_urls} error={e}")
+        error_detail = str(e)
+        print(f"[LLM MultiModal Error] model={_model_name} key_set={bool(API_KEY)} history_len={len(history)} images={current_image_urls}")
+        print(f"[LLM MultiModal Error] detail={error_detail}")
         import traceback
         traceback.print_exc()
         return "Une erreur interne s'est produite lors de la génération de la réponse."
